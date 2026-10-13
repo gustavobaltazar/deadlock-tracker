@@ -32,7 +32,8 @@ export default async function HomePage({
 
       <main className="mx-auto flex max-w-[640px] flex-col items-center px-4 pt-24 pb-16 text-center sm:pt-32">
         <h1 className="text-4xl font-extrabold tracking-tight drop-shadow-lg sm:text-5xl">
-          SEARCH<span className="text-accent">LOCK</span>
+          <span className="text-muted">SEARCH</span>
+                <span className="text-accent">LOCK</span>
         </h1>
         <p className="mt-3 text-sm text-eggshell drop-shadow">{t.site.tagline}</p>
 

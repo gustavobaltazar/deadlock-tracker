@@ -164,7 +164,7 @@ function BuildScore({
   t: Dictionary;
 }) {
   const color =
-    analysis.score >= 75 ? "#69e799" : analysis.score >= 50 ? "#ffed79" : "#cc544e";
+    analysis.score >= 75 ? "#69e799" : analysis.score >= 50 ? "#f2e0bf" : "#cc544e";
 
   return (
     <section className="rounded-md border border-border bg-surface p-4">

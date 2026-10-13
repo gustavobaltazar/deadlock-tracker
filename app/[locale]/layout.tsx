@@ -78,7 +78,8 @@ export default async function LocaleLayout({
                 href={`/${locale}`}
                 className="text-lg font-extrabold tracking-tight"
               >
-                SEARCH<span className="text-accent">LOCK</span>
+                <span className="text-muted">SEARCH</span>
+                <span className="text-accent">LOCK</span>
               </Link>
               <LanguageSwitch />
             </div>
