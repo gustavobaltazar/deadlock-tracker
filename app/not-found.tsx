@@ -1,19 +1,26 @@
 import Link from "next/link";
-import SearchBar from "@/components/SearchBar";
+import "./globals.css";
 
+/**
+ * 404 de raiz, para caminhos que nem chegam a ter idioma. As páginas dentro de
+ * `/[locale]` usam o not-found traduzido. Como o layout raiz não renderiza
+ * <html>, esta página precisa fazê-lo.
+ */
 export default function NotFound() {
   return (
-    <main className="mx-auto max-w-[560px] px-4 py-24 text-center">
-      <h1 className="text-2xl font-bold">Jogador não encontrado</h1>
-      <p className="mt-2 text-sm text-muted">
-        Não há dados registrados para essa conta. Tente buscar pelo nome do perfil Steam.
-      </p>
-      <div className="mt-6">
-        <SearchBar />
-      </div>
-      <Link href="/" className="mt-6 inline-block text-xs text-accent hover:underline">
-        Voltar ao início
-      </Link>
-    </main>
+    <html lang="en">
+      <body className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+        <h1 className="text-2xl font-bold">Page not found</h1>
+        <p className="text-sm text-muted">
+          This page does not exist. Try starting from the home page.
+        </p>
+        <Link
+          href="/en"
+          className="rounded-md border border-border bg-surface-2 px-4 py-2 text-sm font-semibold hover:border-accent"
+        >
+          SEARCH<span className="text-accent">LOCK</span>
+        </Link>
+      </body>
+    </html>
   );
 }

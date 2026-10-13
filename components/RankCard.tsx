@@ -1,5 +1,6 @@
 import type { PlayerRank, RankAsset } from "@/lib/api";
 import { RANK_TIERS, rankImage } from "@/lib/api";
+import type { Dictionary } from "@/lib/i18n";
 
 /**
  * Bloco de elo do jogador.
@@ -11,16 +12,18 @@ import { RANK_TIERS, rankImage } from "@/lib/api";
 export default function RankCard({
   rank,
   placeholder,
+  t,
 }: {
   rank: PlayerRank | null;
   placeholder: RankAsset | undefined;
+  t: Dictionary;
 }) {
   const ranked = rank != null && rank.badge > 0;
 
   return (
     <section className="rounded-lg border border-border bg-surface">
       <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
-        Elo atual
+        {t.player.currentRank}
       </h2>
 
       <div className="flex flex-col items-center px-3 py-5">
@@ -61,10 +64,10 @@ export default function RankCard({
               <span className="h-24 w-28 rounded-full bg-surface-2 opacity-30" />
             )}
             <div className="mt-2 text-sm font-semibold text-muted">
-              Sem rank ainda
+              {t.player.unranked}
             </div>
             <p className="mt-1 text-center text-[11px] leading-snug text-muted">
-              O elo aparece após as partidas de calibração em modo ranqueado.
+              {t.player.unrankedHint}
             </p>
           </>
         )}

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "./I18nProvider";
 import MatchDetails from "./MatchDetails";
 import MatchRow from "./MatchRow";
 import type { MatchView } from "@/lib/api";
+import { fill } from "@/lib/i18n";
 
 const PAGE_SIZE = 20;
 
@@ -16,6 +18,7 @@ export default function MatchList({
   initialMatches: MatchView[];
   total: number;
 }) {
+  const { t } = useI18n();
   const [matches, setMatches] = useState(initialMatches);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export default function MatchList({
       if (data.error) throw new Error(data.error);
       setMatches((prev) => [...prev, ...(data.matches ?? [])]);
     } catch {
-      setError("Não foi possível carregar mais partidas. Tente de novo.");
+      setError(t.match.loadError);
     } finally {
       setLoading(false);
     }
@@ -44,7 +47,7 @@ export default function MatchList({
   if (matches.length === 0) {
     return (
       <p className="px-3 py-6 text-sm text-muted">
-        Nenhuma partida encontrada para esta conta.
+        {t.match.empty}
       </p>
     );
   }
@@ -75,7 +78,7 @@ export default function MatchList({
 
       <div className="border-t border-border px-3 py-3 text-center">
         <p className="mb-2 text-xs text-muted">
-          Exibindo {matches.length} de {total} partidas
+          {fill(t.match.showing, { n: matches.length, total })}
         </p>
         {error && <p className="mb-2 text-xs text-loss">{error}</p>}
         {hasMore ? (
@@ -84,10 +87,10 @@ export default function MatchList({
             disabled={loading}
             className="rounded-md border border-border bg-surface-2 px-5 py-2 text-sm font-semibold hover:border-accent disabled:opacity-50"
           >
-            {loading ? "Carregando…" : "Carregar mais"}
+            {loading ? t.match.loading : t.match.loadMore}
           </button>
         ) : (
-          <p className="text-xs text-muted">Fim do histórico.</p>
+          <p className="text-xs text-muted">{t.match.endOfHistory}</p>
         )}
       </div>
     </>

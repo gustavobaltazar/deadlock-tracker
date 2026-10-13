@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "./I18nProvider";
+import { fill } from "@/lib/i18n";
 
 type Result = {
   account_id: number;
@@ -11,6 +13,7 @@ type Result = {
 };
 
 export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }) {
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
@@ -80,7 +83,7 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
 
   function go(accountId: number) {
     setOpen(false);
-    router.push(`/player/${accountId}`);
+    router.push(`/${locale}/player/${accountId}`);
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -120,9 +123,9 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
           onFocus={() => results.length > 0 && setOpen(true)}
-          placeholder="Nome, account ID ou link do perfil Steam"
+          placeholder={t.search.placeholder}
           className="w-full bg-transparent text-base outline-none placeholder:text-muted"
-          aria-label="Buscar jogador"
+          aria-label={t.search.label}
         />
         {loading && (
           <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-border border-t-accent" />
@@ -136,7 +139,7 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
         >
           {results.length === 0 && !loading && (
             <li className="px-4 py-3 text-sm text-muted">
-              {error ?? "Nenhum jogador encontrado."}
+              {error ?? t.search.empty}
             </li>
           )}
           {results.map((r, i) => (
@@ -156,13 +159,13 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">
-                    {r.personaname ?? `Jogador ${r.account_id}`}
+                    {r.personaname ?? fill(t.player.unknown, { id: r.account_id })}
                   </span>
                   <span className="block text-xs text-muted">#{r.account_id}</span>
                 </span>
                 {r.matches_played_last_30d != null && (
                   <span className="shrink-0 text-xs text-muted">
-                    {r.matches_played_last_30d} jogos / 30d
+                    {fill(t.search.gamesIn30d, { n: r.matches_played_last_30d })}
                   </span>
                 )}
               </button>

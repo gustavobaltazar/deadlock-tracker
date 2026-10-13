@@ -1,70 +1,83 @@
 # SEARCHLOCK
 
-Tracker de estatísticas de [Deadlock](https://store.steampowered.com/app/1422450/Deadlock/):
-busca de jogadores, histórico de partidas, builds e comparação da sua build com a de
-jogadores de elo alto no mesmo confronto.
+Stats tracker for [Deadlock](https://store.steampowered.com/app/1422450/Deadlock/):
+player search, match history, builds, and a comparison between your build and what
+high-rank players run in the same matchup.
 
-Projeto não oficial, sem vínculo com a Valve. Os dados vêm da
-[Deadlock API](https://deadlock-api.com) comunitária.
+Available in English and Portuguese. Unofficial project, not affiliated with Valve.
+Data comes from the community-run [Deadlock API](https://deadlock-api.com).
 
-## O que faz
+## Features
 
-- **Busca flexível** — nome Steam, account ID, SteamID64, SteamID3 ou o link do
-  perfil (`/profiles/<id>` e `/id/<vanity>`), sem precisar de chave da Steam Web API.
-- **Perfil do jogador** — elo atual, heróis mais jogados, taxa de vitória e KDA das
-  últimas partidas, com o cabeçalho tematizado pelo herói que o jogador mais vence.
-- **Histórico paginado** — todas as partidas que a API conhece, com a build de cada uma.
-- **Detalhe da partida** — os 12 jogadores, suas builds e os times.
-- **Análise de build** — compara o que você comprou com o que jogadores Phantom ou
-  acima compram com o mesmo herói, contra os mesmos adversários, na mesma lane; e
-  sugere trocas dentro do mesmo tier.
+- **Flexible search** — Steam name, account ID, SteamID64, SteamID3 or the profile
+  link (`/profiles/<id>` and `/id/<vanity>`), with no Steam Web API key required.
+- **Player profile** — current rank, most played heroes, win rate and KDA for recent
+  matches, with the header themed after the hero the player wins the most with.
+- **Paginated history** — every match the API knows about, each with its build.
+- **Match detail** — all 12 players, their builds and the teams.
+- **Build analysis** — compares what you bought against what Phantom-or-above players
+  buy on the same hero, against the same opponents, in the same lane; then suggests
+  swaps within the same tier.
+- **Bilingual** — English and Portuguese, with the language in the URL (`/en`, `/pt`)
+  so both versions can be indexed.
 
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4
 
-Os Route Handlers funcionam como camada de servidor: evitam CORS, cacheiam os
-catálogos da API e reduzem payloads grandes antes de chegarem ao browser.
+Route Handlers act as the server layer: they avoid CORS, cache the API catalogues and
+shrink large payloads before they reach the browser.
 
-## Rodando localmente
+## Running locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abra <http://localhost:3000>. Não há variáveis de ambiente nem credenciais: todos os
-endpoints usados são públicos.
+Open <http://localhost:3000>. No environment variables or credentials are required —
+every endpoint used is public.
 
 ## Deploy
 
-O projeto roda sem nenhuma variável de ambiente. Para produção, duas são
-opcionais (ver `.env.example`):
+The project runs with no environment variables. Two are optional in production
+(see `.env.example`):
 
-| Variável | Para quê |
+| Variable | Purpose |
 | --- | --- |
-| `DEADLOCK_API_KEY` | Eleva os limites da Deadlock API. Sem ela, os limites valem por IP — e em produção o IP do servidor é compartilhado por todos os visitantes. |
-| `NEXT_PUBLIC_SITE_URL` | URL pública, usada nos metadados de compartilhamento. Detectada automaticamente na Vercel. |
+| `DEADLOCK_API_KEY` | Raises Deadlock API limits. Without it, limits apply per IP — and in production the server IP is shared by every visitor. |
+| `NEXT_PUBLIC_SITE_URL` | Public URL used in sharing metadata. Detected automatically on Vercel. |
 
-O endpoint mais restrito é `/v1/matches/metadata`: **30 req/min por IP** contra
-**30 req/10s com chave**. As respostas são cacheadas no servidor, então visitas ao
-mesmo jogador não repetem a chamada.
+The tightest endpoint is `/v1/matches/metadata`: **30 req/min per IP** against
+**30 req/10s with a key**. Responses are cached server-side, so visits to the same
+player do not repeat the call.
 
-## Notas sobre os dados
+## Notes on the data
 
-Alguns comportamentos da fonte que afetam o que aparece na tela:
+Upstream behaviours that affect what shows up on screen:
 
-- **Partidas recentes podem faltar.** A API só indexa partidas de contas comuns com
-  atraso de horas a dias. Dados em tempo real exigem que a conta seja "bot friend"
-  (recurso pago da API) ou use a [ferramenta de ingest](https://deadlock-api.com/ingest-cache).
-  A interface mostra há quanto tempo foi a última partida registrada.
-- **Vitória** é `match_result === player_team` — `match_result` é o time vencedor, não
-  um booleano.
-- **Aderência de build não é nota de qualidade.** Ela mede o quanto a build seguiu o
-  consenso daquele confronto; itens situacionais raros derrubam o número sem serem erro.
-- **Tier de item é preço** (800 / 1600 / 3200 / 6400), por isso as sugestões de
-  troca nunca cruzam tiers.
+- **Recent matches may be missing.** The API only indexes matches from regular
+  accounts after a delay of hours to days. Real-time data requires the account to be a
+  "bot friend" (a paid API perk) or to use their
+  [ingest tool](https://deadlock-api.com/ingest-cache). The UI shows how long ago the
+  most recent recorded match was.
+- **A win** is `match_result === player_team` — `match_result` is the winning team, not
+  a boolean.
+- **Build adherence is not a quality score.** It measures how closely a build followed
+  the consensus for that matchup; rare situational items lower it without being
+  mistakes.
+- **Item tier is price** (800 / 1600 / 3200 / 6400), which is why swap suggestions
+  never cross tiers.
 
-## Licença
+## Localization
 
-Os assets de Deadlock pertencem à Valve.
+UI strings live in `lib/i18n.ts`, one dictionary per language. The English dictionary
+defines the shape, so TypeScript flags any key missing from the other languages.
+
+Proper nouns from the game — heroes, items, ranks, Amber Hand / Sapphire Flame,
+Weapon / Vitality / Spirit — are intentionally left untranslated, since the community
+uses the English terms in both languages.
+
+## License
+
+Deadlock assets belong to Valve.

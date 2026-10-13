@@ -1,0 +1,308 @@
+/**
+ * Internacionalização do SEARCHLOCK.
+ *
+ * O idioma vive no caminho da URL (/en, /pt) para que buscadores indexem as
+ * duas versões separadamente — com um idioma só por URL, metade do público
+ * ficaria invisível em buscas.
+ *
+ * Nomes próprios do jogo (heróis, itens, ranks, Amber Hand / Sapphire Flame,
+ * Weapon / Vitality / Spirit) não são traduzidos: a comunidade os usa em inglês
+ * nos dois idiomas.
+ */
+
+export const locales = ["en", "pt"] as const;
+export type Locale = (typeof locales)[number];
+export const defaultLocale: Locale = "en";
+
+export function isLocale(value: string): value is Locale {
+  return (locales as readonly string[]).includes(value);
+}
+
+/** Rótulos do seletor de idioma, cada um no próprio idioma. */
+export const localeNames: Record<Locale, string> = {
+  en: "English",
+  pt: "Português",
+};
+
+const en = {
+  site: {
+    tagline: "Rank, match history and per-hero performance for any player.",
+    description:
+      "Stats, match history, builds and rank for Deadlock players.",
+    footer: {
+      dataBy: "Data provided by",
+      disclaimer: "Unofficial project, not affiliated with Valve.",
+    },
+  },
+  search: {
+    placeholder: "Name, account ID or Steam profile link",
+    label: "Search player",
+    empty: "No player found.",
+    unresolvedUrl: "Could not resolve that Steam URL.",
+    hint: "Accepts a name, account ID or Steam profile link. Accounts inactive for the last 30 days may not show up in name searches.",
+    gamesIn30d: "{n} games / 30d",
+  },
+  player: {
+    unknown: "Player {id}",
+    mainHero: "Main hero:",
+    mainHeroStats: "{wins}W in {matches} matches ({pct}%)",
+    steamProfile: "Steam profile",
+    currentRank: "Current rank",
+    unranked: "No rank yet",
+    unrankedHint: "The rank shows up after placement matches in ranked mode.",
+    recentTitle: "Last {n} matches",
+    winLetter: "W",
+    lossLetter: "L",
+    winRate: "win rate",
+    avgKda: "average KDA",
+    topHeroes: "Most played heroes",
+    noHeroes: "No hero data.",
+    heroLine: "{matches} games · {kda} KDA",
+    matchHistory: "Match history",
+    recorded: "{n} recorded",
+  },
+  freshness: {
+    lastMatch: "Most recent match on record: {ago} ago.",
+    lessThanHour: "less than an hour",
+    hours: "{n} hours",
+    days: "{n} days",
+    staleWarning:
+      "Matches played after that may not have been collected yet. The API indexes regular accounts with a delay; for real-time history the account must send its data through the Deadlock API",
+    ingestTool: "ingest tool",
+  },
+  match: {
+    win: "Win",
+    loss: "Loss",
+    kda: "KDA",
+    perfectKda: "Perfect",
+    level: "Lv {n}",
+    souls: "Souls earned in the match",
+    lastHits: "{lh} LH · {dn} DN",
+    empty: "No matches found for this account.",
+    showing: "Showing {n} of {total} matches",
+    loadMore: "Load more",
+    loading: "Loading…",
+    loadError: "Could not load more matches. Try again.",
+    endOfHistory: "End of history.",
+    loadingDetails: "Loading match details…",
+    detailsError: "Failed to load the match.",
+  },
+  build: {
+    adherence: "adherence",
+    comparedTo: "Compared to",
+    highSkill: "Phantom or above players",
+    allPlayers: "all players in this mode (Street Brawl has no rank filter)",
+    sameHero: "who played the same hero",
+    against: "against",
+    scope: {
+      lane: "same lane",
+      matchup: "same matchup",
+      hero: "same hero",
+    },
+    sampleSize: "{n} matches",
+    analyzed: "analyzed.",
+    disclaimer:
+      "The number measures how closely the build followed the consensus for this matchup — it is not a quality score: rare situational items lower adherence without being mistakes.",
+    swapsTitle: "To raise adherence, these were the swaps",
+    swapsDelta: "adherence would go from {from}% to {to}%",
+    swapsNote:
+      "Swaps stay within the same tier, because tier is the item's price — we never suggest giving up a T4 for a cheaper item. Even so it is a statistical suggestion: it does not account for synergy with the rest of your build or how the match was going.",
+    yourItems: "Your items",
+    candidates: "Candidates · most used that you skipped",
+    allCommonTaken: "You took every common item for this matchup.",
+    columnPickRate: "pick rate",
+    columnWinRate: "win %",
+    pickRateHelp: "How many players in the sample bought this item",
+    winRateHelp:
+      "Win rate of the sampled matches in which this item was bought",
+  },
+  modes: {
+    1: "Normal",
+    2: "Private lobby",
+    3: "Co-op bots",
+    4: "Ranked",
+    5: "Server test",
+    6: "Tutorial",
+    7: "Hero Labs",
+    8: "New player",
+    brawl: "Street Brawl",
+    unknown: "Unknown",
+  },
+  time: {
+    minutesAgo: "{n} min ago",
+    hoursAgo: "{n} h ago",
+    daysAgo: "{n} d ago",
+    monthsAgo: "{n} months ago",
+    yearsAgo: "{n} years ago",
+  },
+  errors: {
+    notFoundTitle: "Player not found",
+    notFoundBody:
+      "There is no data on record for this account. Try searching by Steam profile name.",
+    backHome: "Back to home",
+    genericTitle: "Something went wrong",
+    genericBody:
+      "The Deadlock API may be unstable or rate limited right now.",
+    retry: "Try again",
+  },
+  language: "Language",
+};
+
+/** O dicionário em inglês define o formato; o português precisa cobri-lo todo. */
+export type Dictionary = typeof en;
+
+const pt: Dictionary = {
+  site: {
+    tagline:
+      "Rank, histórico de partidas e desempenho por herói de qualquer jogador.",
+    description:
+      "Estatísticas, histórico de partidas, builds e rank de jogadores de Deadlock.",
+    footer: {
+      dataBy: "Dados fornecidos pela",
+      disclaimer: "Projeto não oficial, sem vínculo com a Valve.",
+    },
+  },
+  search: {
+    placeholder: "Nome, account ID ou link do perfil Steam",
+    label: "Buscar jogador",
+    empty: "Nenhum jogador encontrado.",
+    unresolvedUrl: "Não foi possível resolver essa URL da Steam.",
+    hint: "Aceita nome, account ID ou o link do perfil Steam. Contas inativas nos últimos 30 dias podem não aparecer na busca por nome.",
+    gamesIn30d: "{n} jogos / 30d",
+  },
+  player: {
+    unknown: "Jogador {id}",
+    mainHero: "Herói principal:",
+    mainHeroStats: "{wins}V em {matches} partidas ({pct}%)",
+    steamProfile: "Perfil Steam",
+    currentRank: "Elo atual",
+    unranked: "Sem rank ainda",
+    unrankedHint:
+      "O elo aparece após as partidas de calibração em modo ranqueado.",
+    recentTitle: "Últimas {n} partidas",
+    winLetter: "V",
+    lossLetter: "D",
+    winRate: "taxa de vitória",
+    avgKda: "KDA médio",
+    topHeroes: "Heróis mais jogados",
+    noHeroes: "Sem dados de heróis.",
+    heroLine: "{matches} jogos · {kda} KDA",
+    matchHistory: "Histórico de partidas",
+    recorded: "{n} registradas",
+  },
+  freshness: {
+    lastMatch: "Partida mais recente registrada: {ago} atrás.",
+    lessThanHour: "menos de 1 hora",
+    hours: "{n} horas",
+    days: "{n} dias",
+    staleWarning:
+      "Partidas jogadas depois disso podem ainda não ter sido coletadas. A API indexa partidas de contas comuns com atraso; para histórico em tempo real, a conta precisa enviar os dados pela",
+    ingestTool: "ferramenta de ingest",
+  },
+  match: {
+    win: "Vitória",
+    loss: "Derrota",
+    kda: "KDA",
+    perfectKda: "Perfeito",
+    level: "Nv {n}",
+    souls: "Almas acumuladas na partida",
+    lastHits: "{lh} LH · {dn} DN",
+    empty: "Nenhuma partida encontrada para esta conta.",
+    showing: "Exibindo {n} de {total} partidas",
+    loadMore: "Carregar mais",
+    loading: "Carregando…",
+    loadError: "Não foi possível carregar mais partidas. Tente de novo.",
+    endOfHistory: "Fim do histórico.",
+    loadingDetails: "Carregando detalhes da partida…",
+    detailsError: "Falha ao carregar a partida.",
+  },
+  build: {
+    adherence: "aderência",
+    comparedTo: "Comparado a",
+    highSkill: "jogadores Phantom ou acima",
+    allPlayers:
+      "todos os jogadores do modo (Street Brawl não tem recorte de elo)",
+    sameHero: "que jogaram o mesmo herói",
+    against: "contra",
+    scope: {
+      lane: "mesma lane",
+      matchup: "mesmo confronto",
+      hero: "mesmo herói",
+    },
+    sampleSize: "{n} partidas",
+    analyzed: "analisadas.",
+    disclaimer:
+      "O número mede o quanto a build seguiu o consenso desse confronto — não é nota de qualidade: itens situacionais raros derrubam a aderência sem serem erro.",
+    swapsTitle: "Para subir a aderência, estas eram as trocas",
+    swapsDelta: "aderência iria de {from}% para {to}%",
+    swapsNote:
+      "Trocas só dentro do mesmo tier, porque o tier é o preço do item — nunca sugerimos abrir mão de um T4 por um item mais barato. Ainda assim é sugestão estatística: não considera a sinergia com o resto da sua build nem o rumo da partida.",
+    yourItems: "Seus itens",
+    candidates: "Candidatos · mais usados que você não levou",
+    allCommonTaken: "Você levou todos os itens mais comuns do confronto.",
+    columnPickRate: "adoção",
+    columnWinRate: "vitór.",
+    pickRateHelp: "Quantos dos jogadores da amostra compraram este item",
+    winRateHelp:
+      "Taxa de vitória das partidas da amostra em que este item foi comprado",
+  },
+  modes: {
+    1: "Normal",
+    2: "Lobby privado",
+    3: "Contra bots",
+    4: "Ranqueada",
+    5: "Teste",
+    6: "Tutorial",
+    7: "Hero Labs",
+    8: "Novo jogador",
+    brawl: "Street Brawl",
+    unknown: "Desconhecido",
+  },
+  time: {
+    minutesAgo: "{n} min atrás",
+    hoursAgo: "{n} h atrás",
+    daysAgo: "{n} d atrás",
+    monthsAgo: "{n} meses atrás",
+    yearsAgo: "{n} anos atrás",
+  },
+  errors: {
+    notFoundTitle: "Jogador não encontrado",
+    notFoundBody:
+      "Não há dados registrados para essa conta. Tente buscar pelo nome do perfil Steam.",
+    backHome: "Voltar ao início",
+    genericTitle: "Algo deu errado",
+    genericBody:
+      "A Deadlock API pode estar instável ou com limite de requisições atingido.",
+    retry: "Tentar novamente",
+  },
+  language: "Idioma",
+};
+
+const dictionaries: Record<Locale, Dictionary> = { en, pt };
+
+export function getDictionary(locale: Locale): Dictionary {
+  return dictionaries[locale] ?? dictionaries[defaultLocale];
+}
+
+/** Substitui marcadores {chave} por valores. */
+export function fill(
+  template: string,
+  values: Record<string, string | number>,
+): string {
+  return template.replace(/\{(\w+)\}/g, (match, key) =>
+    key in values ? String(values[key]) : match,
+  );
+}
+
+/** Locale do navegador, usado quando o visitante ainda não escolheu. */
+export function detectLocale(acceptLanguage: string | null): Locale {
+  if (!acceptLanguage) return defaultLocale;
+  const preferred = acceptLanguage
+    .split(",")
+    .map((part) => part.split(";")[0].trim().toLowerCase());
+  for (const lang of preferred) {
+    if (lang.startsWith("pt")) return "pt";
+    if (lang.startsWith("en")) return "en";
+  }
+  return defaultLocale;
+}

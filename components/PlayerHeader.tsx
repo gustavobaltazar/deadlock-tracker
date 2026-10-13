@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Hero, PlayerHeroStats, SteamProfile } from "@/lib/api";
 import { percent } from "@/lib/format";
+import { fill, type Dictionary, type Locale } from "@/lib/i18n";
 
 /**
  * Cabeçalho com a identidade visual do herói principal do jogador.
@@ -18,11 +19,15 @@ export default function PlayerHeader({
   profile,
   signature,
   signatureHero,
+  locale,
+  t,
 }: {
   accountId: number;
   profile: SteamProfile | null;
   signature: PlayerHeroStats | null;
   signatureHero: Hero | undefined;
+  locale: Locale;
+  t: Dictionary;
 }) {
   const tint = signatureHero?.styleHex ?? "#c6a269";
 
@@ -86,7 +91,7 @@ export default function PlayerHeader({
 
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-bold drop-shadow-lg">
-            {profile?.personaname ?? `Jogador ${accountId}`}
+            {profile?.personaname ?? fill(t.player.unknown, { id: accountId })}
           </h1>
           <p className="mt-0.5 text-xs text-muted">
             account_id {accountId}
@@ -95,14 +100,17 @@ export default function PlayerHeader({
 
           {signature && signatureHero && (
             <p className="mt-1.5 text-xs drop-shadow">
-              <span className="text-muted">Herói principal: </span>
+              <span className="text-muted">{t.player.mainHero} </span>
               <span className="font-bold" style={{ color: tint }}>
                 {signatureHero.name}
               </span>
               <span className="text-eggshell">
-                {" "}
-                · {signature.wins}V em {signature.matches_played} partidas (
-                {percent(signature.wins, signature.matches_played)}%)
+                {" · "}
+                {fill(t.player.mainHeroStats, {
+                  wins: signature.wins,
+                  matches: signature.matches_played,
+                  pct: percent(signature.wins, signature.matches_played),
+                })}
               </span>
             </p>
           )}
@@ -115,7 +123,7 @@ export default function PlayerHeader({
                 rel="noreferrer"
                 className="rounded-md border border-border bg-bg/85 px-3 py-1.5 text-xs text-accent backdrop-blur-sm hover:border-accent"
               >
-                Perfil Steam ↗
+                {t.player.steamProfile} ↗
               </a>
             )}
           </div>

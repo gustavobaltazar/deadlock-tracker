@@ -1,8 +1,16 @@
 import Image from "next/image";
 import SearchBar from "@/components/SearchBar";
 import { CITY_BACKGROUND } from "@/lib/api";
+import { getDictionary, isLocale } from "@/lib/i18n";
 
-export default function HomePage() {
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = getDictionary(isLocale(locale) ? locale : "en");
+
   return (
     <>
       {/* Cidade do menu do Deadlock ao fundo. A arte original já é escura e
@@ -26,18 +34,13 @@ export default function HomePage() {
         <h1 className="text-4xl font-extrabold tracking-tight drop-shadow-lg sm:text-5xl">
           SEARCH<span className="text-accent">LOCK</span>
         </h1>
-        <p className="mt-3 text-sm text-eggshell drop-shadow">
-          Veja rank, histórico de partidas e desempenho por herói de qualquer jogador.
-        </p>
+        <p className="mt-3 text-sm text-eggshell drop-shadow">{t.site.tagline}</p>
 
         <div className="mt-8 w-full">
           <SearchBar autoFocus />
         </div>
 
-        <p className="mt-4 text-xs text-muted drop-shadow">
-          Aceita nome, account ID ou o link do perfil Steam. Contas inativas nos últimos
-          30 dias podem não aparecer na busca por nome.
-        </p>
+        <p className="mt-4 text-xs text-muted drop-shadow">{t.search.hint}</p>
       </main>
     </>
   );

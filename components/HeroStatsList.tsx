@@ -1,15 +1,18 @@
 import type { Hero, PlayerHeroStats } from "@/lib/api";
 import { percent } from "@/lib/format";
+import { fill, type Dictionary } from "@/lib/i18n";
 
 export default function HeroStatsList({
   stats,
   heroes,
+  t,
 }: {
   stats: PlayerHeroStats[];
   heroes: Map<number, Hero>;
+  t: Dictionary;
 }) {
   if (stats.length === 0) {
-    return <p className="px-3 py-4 text-sm text-muted">Sem dados de heróis.</p>;
+    return <p className="px-3 py-4 text-sm text-muted">{t.player.noHeroes}</p>;
   }
 
   return (
@@ -38,7 +41,10 @@ export default function HeroStatsList({
                 {hero?.name ?? `Herói ${s.hero_id}`}
               </div>
               <div className="text-[11px] text-muted">
-                {s.matches_played} jogos · {avgKda} KDA
+                {fill(t.player.heroLine, {
+                  matches: s.matches_played,
+                  kda: avgKda,
+                })}
               </div>
             </div>
 
@@ -51,7 +57,8 @@ export default function HeroStatsList({
                 {wr}%
               </div>
               <div className="text-[11px] text-muted tabular-nums">
-                {s.wins}V {s.matches_played - s.wins}D
+                {s.wins}{t.player.winLetter} {s.matches_played - s.wins}
+                {t.player.lossLetter}
               </div>
             </div>
           </li>

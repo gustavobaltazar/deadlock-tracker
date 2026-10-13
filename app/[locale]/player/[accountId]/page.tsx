@@ -19,6 +19,7 @@ import {
   toMatchViews,
 } from "@/lib/api";
 import { kda, percent } from "@/lib/format";
+import { fill, getDictionary, isLocale, type Locale } from "@/lib/i18n";
 
 const RECENT_COUNT = 20;
 
@@ -26,26 +27,36 @@ const RECENT_COUNT = 20;
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ accountId: string }>;
+  params: Promise<{ locale: string; accountId: string }>;
 }) {
-  const { accountId } = await params;
+  const { locale, accountId } = await params;
+  const t = getDictionary(isLocale(locale) ? locale : "en");
   const id = Number(accountId);
-  if (!Number.isInteger(id) || id <= 0) return { title: "Jogador" };
+  if (!Number.isInteger(id) || id <= 0) return {};
 
   const profile = await getProfile(id);
-  const nome = profile?.personaname ?? `Jogador ${id}`;
+  const nome = profile?.personaname ?? fill(t.player.unknown, { id });
   return {
     title: nome,
-    description: `Rank, histórico de partidas e builds de ${nome} em Deadlock.`,
+    description: fill(t.site.description, {}) + ` — ${nome}`,
+    alternates: {
+      canonical: `/${locale}/player/${id}`,
+      languages: {
+        en: `/en/player/${id}`,
+        "pt-BR": `/pt/player/${id}`,
+      },
+    },
   };
 }
 
 export default async function PlayerPage({
   params,
 }: {
-  params: Promise<{ accountId: string }>;
+  params: Promise<{ locale: string; accountId: string }>;
 }) {
-  const { accountId } = await params;
+  const { locale: rawLocale, accountId } = await params;
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "en";
+  const t = getDictionary(locale);
   const id = Number(accountId);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
@@ -95,31 +106,39 @@ export default async function PlayerPage({
         profile={profile}
         signature={signature}
         signatureHero={signature ? heroes.get(signature.hero_id) : undefined}
+        locale={locale}
+        t={t}
       />
 
       <div className="mb-5">
-        <DataFreshness lastMatchTime={matches[0]?.start_time ?? null} />
+        <DataFreshness lastMatchTime={matches[0]?.start_time ?? null} t={t} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         {/* Coluna esquerda */}
         <div className="space-y-5">
-          <RankCard rank={rank} placeholder={rankAssets.get(0)} />
+          <RankCard rank={rank} placeholder={rankAssets.get(0)} t={t} />
 
           <section className="rounded-lg border border-border bg-surface">
             <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
-              Últimas {recent.length} partidas
+              {fill(t.player.recentTitle, { n: recent.length })}
             </h2>
             <div className="flex items-center gap-4 px-3 py-4">
               <div className="flex-1">
                 <div className="text-sm text-muted">
-                  <span className="font-semibold text-win">{wins}V</span>{" "}
-                  <span className="font-semibold text-loss">{losses}D</span>
+                  <span className="font-semibold text-win">
+                    {wins}
+                    {t.player.winLetter}
+                  </span>{" "}
+                  <span className="font-semibold text-loss">
+                    {losses}
+                    {t.player.lossLetter}
+                  </span>
                 </div>
                 <div className="mt-1 text-2xl font-bold">
                   {percent(wins, recent.length)}%
                 </div>
-                <div className="text-xs text-muted">taxa de vitória</div>
+                <div className="text-xs text-muted">{t.player.winRate}</div>
               </div>
               <div className="flex-1 border-l border-border pl-4">
                 <div className="text-sm tabular-nums">
@@ -130,27 +149,27 @@ export default async function PlayerPage({
                   / {(totals.a / Math.max(1, recent.length)).toFixed(1)}
                 </div>
                 <div className="mt-1 text-2xl font-bold">
-                  {kda(totals.k, totals.d, totals.a)}
+                  {kda(totals.k, totals.d, totals.a, t)}
                 </div>
-                <div className="text-xs text-muted">KDA médio</div>
+                <div className="text-xs text-muted">{t.player.avgKda}</div>
               </div>
             </div>
           </section>
 
           <section className="rounded-lg border border-border bg-surface">
             <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
-              Heróis mais jogados
+              {t.player.topHeroes}
             </h2>
-            <HeroStatsList stats={topHeroes} heroes={heroes} />
+            <HeroStatsList stats={topHeroes} heroes={heroes} t={t} />
           </section>
         </div>
 
         {/* Coluna direita: histórico */}
         <section className="rounded-lg border border-border bg-surface">
           <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
-            Histórico de partidas
+            {t.player.matchHistory}
             <span className="ml-2 text-xs font-normal text-muted">
-              {matches.length} registradas
+              {fill(t.player.recorded, { n: matches.length })}
             </span>
           </h2>
           <MatchList
