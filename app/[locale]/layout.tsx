@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { I18nProvider } from "@/components/I18nProvider";
 import LanguageSwitch from "@/components/LanguageSwitch";
+import LogoMark from "@/components/LogoMark";
 import { getDictionary, isLocale, locales, type Locale } from "@/lib/i18n";
 
 /**
@@ -88,10 +89,13 @@ export default async function LocaleLayout({
             <div className="mx-auto flex h-14 max-w-[1100px] items-center justify-between gap-4 px-4">
               <Link
                 href={`/${locale}`}
-                className="text-lg font-extrabold tracking-tight"
+                className="flex items-center gap-2 text-2xl font-extrabold tracking-tight"
               >
-                <span className="text-muted">SEARCH</span>
-                <span className="text-accent">LOCK</span>
+                <LogoMark className="h-7 w-auto text-accent" />
+                <span>
+                  <span className="text-muted">SEARCH</span>
+                  <span className="text-accent">LOCK</span>
+                </span>
               </Link>
               <LanguageSwitch />
             </div>
