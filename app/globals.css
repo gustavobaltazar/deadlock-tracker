@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/*
+ * Paleta oficial do Deadlock, extraída de https://api.deadlock-api.com/v1/assets/colors.
+ * Os nomes originais do jogo estão nos comentários. Os tons marcados como
+ * "derivado" não existem na paleta do jogo e foram interpolados entre as cores
+ * oficiais para dar hierarquia de superfície à interface web.
+ */
+@theme {
+  --color-bg: #10130d; /* off_black */
+  --color-surface: #191c15; /* derivado: off_black + dark_gray */
+  --color-surface-2: #2e2c27; /* color_common_dark_gray */
+  --color-border: #3b3a31; /* derivado de base_border */
+  --color-ink: #ffefd7; /* base_text / off_white */
+  --color-muted: #aeaa94; /* copper_flat */
+  --color-eggshell: #dec5a0; /* eggshell */
+
+  --color-accent: #ffed79; /* gold_color */
+  --color-accent-dim: #c6a269; /* golden_light */
+  --color-accent-dark: #92703c; /* golden_dark */
+
+  --color-win: #69e799; /* deadlock_green */
+  --color-win-bg: #1e3326; /* derivado */
+  --color-loss: #cc544e; /* red_flat */
+  --color-loss-bg: #37201e; /* derivado */
+
+  --color-amber: #d4860b; /* team1_color */
+  --color-sapphire: #4d75c3; /* team2_color */
+  --color-souls: #ffed79; /* gold_color */
+}
+
+/*
+ * A cor de fundo fica só no <html>. Se o <body> também pintasse, qualquer
+ * camada com z-index negativo (o fundo da cidade na home) ficaria escondida
+ * atrás dele — elementos com z negativo são pintados atrás do fundo do pai.
+ */
+html {
+  background: var(--color-bg);
+}
+
+html,
+body {
+  color: var(--color-ink);
+}
+
+body {
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
