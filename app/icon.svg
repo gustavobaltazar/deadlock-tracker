@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SEARCHLOCK">
+  <title>SEARCHLOCK</title>
+  <rect width="64" height="64" rx="14" fill="#10130d" />
+  <defs>
+    <clipPath id="lens">
+      <circle cx="27" cy="27" r="14" />
+    </clipPath>
+  </defs>
+  <!-- Skyline dentro da lente: remete à cidade do jogo sem usar nenhum elemento
+       de marca da Valve. Poucas formas e largas, para continuar legível a 16px. -->
+  <g clip-path="url(#lens)" fill="#f2e0bf">
+    <rect x="13" y="28" width="8" height="15" />
+    <rect x="23" y="18" width="9" height="25" />
+    <rect x="34" y="25" width="8" height="18" />
+  </g>
+  <circle cx="27" cy="27" r="14" fill="none" stroke="#f2e0bf" stroke-width="5" />
+  <path
+    d="M37.5 37.5 L52 52"
+    stroke="#f2e0bf"
+    stroke-width="8"
+    stroke-linecap="round"
+  />
+</svg>

@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
+import { Quicksand } from "next/font/google";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { I18nProvider } from "@/components/I18nProvider";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import { getDictionary, isLocale, locales, type Locale } from "@/lib/i18n";
+
+/**
+ * Fonte do site. next/font baixa e serve os arquivos junto da aplicação, então
+ * não há requisição ao Google a cada visita nem salto de layout ao carregar.
+ */
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-quicksand",
+  display: "swap",
+});
 
 /** Gera /en e /pt estaticamente. */
 export function generateStaticParams() {
@@ -66,7 +78,7 @@ export default async function LocaleLayout({
   const dictionary = getDictionary(locale as Locale);
 
   return (
-    <html lang={locale === "pt" ? "pt-BR" : "en"}>
+    <html lang={locale === "pt" ? "pt-BR" : "en"} className={quicksand.variable}>
       {/* Coluna flex com o conteúdo em flex-1: em páginas curtas, como a home,
           isso empurra o rodapé para a base da janela em vez de deixá-lo solto
           logo abaixo do conteúdo. */}
