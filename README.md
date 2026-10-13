@@ -47,7 +47,7 @@ Alguns comportamentos da fonte que afetam o que aparece na tela:
   um booleano.
 - **Aderência de build não é nota de qualidade.** Ela mede o quanto a build seguiu o
   consenso daquele confronto; itens situacionais raros derrubam o número sem serem erro.
-- **Tier de item é preço** (800 / 1600 / 3200 / 6400 / 9999), por isso as sugestões de
+- **Tier de item é preço** (800 / 1600 / 3200 / 6400), por isso as sugestões de
   troca nunca cruzam tiers.
 
 ## Licença
