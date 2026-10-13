@@ -116,6 +116,11 @@ const en = {
     winRateHelp:
       "Win rate of the sampled matches in which this item was bought",
   },
+  item: {
+    passive: "Passive",
+    active: "Active",
+    souls: "souls",
+  },
   modes: {
     1: "Normal",
     2: "Private lobby",
@@ -245,6 +250,11 @@ const pt: Dictionary = {
     pickRateHelp: "Quantos dos jogadores da amostra compraram este item",
     winRateHelp:
       "Taxa de vitória das partidas da amostra em que este item foi comprado",
+  },
+  item: {
+    passive: "Passivo",
+    active: "Ativo",
+    souls: "almas",
   },
   modes: {
     1: "Normal",

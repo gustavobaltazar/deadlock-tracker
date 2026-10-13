@@ -88,6 +88,24 @@ export type MatchView = MatchHistoryEntry & {
   items: ItemView[];
 };
 
+/** Trecho de texto do jogo: `highlight` marca os termos que ele realça. */
+export type RichText = { text: string; highlight: boolean }[];
+
+export type ItemStat = {
+  label: string;
+  value: string;
+  icon: string | null;
+  /** O jogo destaca estas acima das demais. */
+  important: boolean;
+};
+
+export type ItemSection = {
+  /** "innate" = passivo; "active" = habilidade com cooldown. */
+  kind: string;
+  text: RichText | null;
+  stats: ItemStat[];
+};
+
 export type ItemView = {
   id: number;
   /** Nome oficial em inglês, igual ao do jogo. */
@@ -102,7 +120,45 @@ export type ItemView = {
    * vêm com o sentinela 9999, que não é um preço de verdade.
    */
   cost: number;
+  /** Resumo do que o item faz. */
+  description: RichText | null;
+  /** "passive", "instant_cast"… */
+  activation: string | null;
+  /** Seções do tooltip oficial, já resolvidas em rótulo + valor. */
+  sections: ItemSection[];
 };
+
+/**
+ * Converte o texto do jogo em segmentos marcados.
+ *
+ * As descrições vêm com HTML (`<span class="highlight">`, `<br>`). Em vez de
+ * injetar esse markup na página, quebramos em segmentos e deixamos o React
+ * renderizar — nada vindo da API é interpretado como HTML.
+ */
+function parseRichText(raw: string | null | undefined): RichText | null {
+  if (!raw) return null;
+
+  const normalizado = raw.replace(/<br\s*\/?>/gi, " ");
+  const partes: RichText = [];
+  const regex = /<span[^>]*class="[^"]*highlight[^"]*"[^>]*>(.*?)<\/span>/gi;
+
+  let ultimo = 0;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(normalizado))) {
+    if (m.index > ultimo) {
+      partes.push({ text: normalizado.slice(ultimo, m.index), highlight: false });
+    }
+    partes.push({ text: m[1], highlight: true });
+    ultimo = m.index + m[0].length;
+  }
+  if (ultimo < normalizado.length) {
+    partes.push({ text: normalizado.slice(ultimo), highlight: false });
+  }
+
+  return partes
+    .map((parte) => ({ ...parte, text: parte.text.replace(/<[^>]+>/g, "") }))
+    .filter((parte) => parte.text.length > 0);
+}
 
 export function toMatchViews(
   matches: MatchHistoryEntry[],
@@ -280,12 +336,33 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
     image_webp?: string | null;
     shop_image?: string | null;
     shop_image_webp?: string | null;
+    activation?: string | null;
+    description?: { desc?: string | null } | null;
+    properties?: Record<string, RawProperty> | null;
+    tooltip_sections?: RawSection[] | null;
+  };
+  type RawProperty = {
+    value?: string | null;
+    label?: string | null;
+    postfix?: string | null;
+    icon?: string | null;
+  };
+  type RawSection = {
+    section_type?: string | null;
+    section_attributes?: {
+      loc_string?: string | null;
+      properties?: string[] | null;
+      important_properties?: string[] | null;
+      elevated_properties?: string[] | null;
+    }[];
   };
 
   const raw = await get<RawItem[]>("/v1/assets/items", 86400);
   const map = new Map<number, ItemView>();
+
   for (const i of raw) {
     if (i.type !== "upgrade") continue;
+    const descricao = parseRichText(i.description?.desc);
     map.set(i.id, {
       id: i.id,
       name: i.name,
@@ -294,9 +371,73 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
       slot: i.item_slot_type ?? "weapon",
       tier: i.item_tier ?? 0,
       cost: Number(i.cost) || 0,
+      description: descricao,
+      activation: i.activation ?? null,
+      sections: buildSections(i.tooltip_sections, i.properties, descricao),
     });
   }
   return map;
+
+  /**
+   * Monta as seções do tooltip.
+   *
+   * `properties` traz ~20 entradas por item, boa parte interna ou com valor
+   * sentinela (-1, 0). O próprio jogo já resolve isso: `tooltip_sections` lista
+   * quais propriedades exibir e em que ordem, então seguimos essa curadoria em
+   * vez de tentar adivinhar quais são relevantes.
+   */
+  function buildSections(
+    sections: RawSection[] | null | undefined,
+    properties: Record<string, RawProperty> | null | undefined,
+    descricao: RichText | null,
+  ): ItemSection[] {
+    const textoDe = (t: RichText | null) =>
+      (t ?? []).map((parte) => parte.text).join("").trim();
+    const textoDescricao = textoDe(descricao);
+    if (!sections || !properties) return [];
+
+    const resolve = (chaves: string[] | null | undefined, important: boolean) =>
+      (chaves ?? [])
+        .map((chave) => {
+          const prop = properties[chave];
+          if (!prop?.label || prop.value == null || prop.value === "") return null;
+          // Parte dos valores já vem com a unidade ("25m"), e o postfix a
+          // repetiria ("25mm"); só acrescentamos quando ainda falta.
+          // Parte dos valores já vem com a unidade ("1.75m") e o postfix a
+          // repetiria. A comparação ignora espaços porque o postfix às vezes
+          // chega como " m", que não casaria com o fim de "1.75m".
+          const bruto = String(prop.value);
+          const unidade = (prop.postfix ?? "").trim();
+          const value =
+            unidade && !bruto.trim().endsWith(unidade) ? bruto + unidade : bruto;
+          return {
+            label: prop.label,
+            value,
+            icon: prop.icon ?? null,
+            important,
+          };
+        })
+        .filter((stat): stat is ItemStat => stat !== null);
+
+    return sections
+      .flatMap((section) =>
+        (section.section_attributes ?? []).map((attr) => {
+          const texto = parseRichText(attr.loc_string);
+          return {
+            kind: section.section_type ?? "innate",
+            // Várias seções repetem palavra por palavra a descrição do item;
+            // mostrar as duas duplicaria o texto no cartão.
+            text: textoDe(texto) === textoDescricao ? null : texto,
+            stats: [
+              ...resolve(attr.important_properties, true),
+              ...resolve(attr.elevated_properties, true),
+              ...resolve(attr.properties, false),
+            ],
+          };
+        }),
+      )
+      .filter((section) => section.text || section.stats.length > 0);
+  }
 }
 
 /**
