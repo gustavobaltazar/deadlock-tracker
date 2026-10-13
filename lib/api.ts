@@ -128,9 +128,22 @@ export function isWin(m: MatchHistoryEntry): boolean {
   return m.match_result === m.player_team;
 }
 
+/**
+ * Chave opcional da Deadlock API (header `X-API-KEY`).
+ *
+ * Sem ela a API funciona, mas os limites valem por IP — e em produção todas as
+ * requisições saem do mesmo IP do servidor, compartilhado entre os visitantes.
+ * O endpoint mais restrito é /v1/matches/metadata: 30 req/min por IP contra
+ * 30 req/10s com chave. Defina DEADLOCK_API_KEY no ambiente para usá-la.
+ */
+const API_KEY = process.env.DEADLOCK_API_KEY;
+
 async function get<T>(path: string, revalidate: number): Promise<T> {
   const res = await fetch(`${API}${path}`, {
-    headers: { Accept: "application/json" },
+    headers: {
+      Accept: "application/json",
+      ...(API_KEY ? { "X-API-KEY": API_KEY } : {}),
+    },
     next: { revalidate },
   });
   if (!res.ok) {

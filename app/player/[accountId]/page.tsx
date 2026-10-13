@@ -22,6 +22,24 @@ import { kda, percent } from "@/lib/format";
 
 const RECENT_COUNT = 20;
 
+/** Título por jogador, para links compartilhados identificarem o perfil. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ accountId: string }>;
+}) {
+  const { accountId } = await params;
+  const id = Number(accountId);
+  if (!Number.isInteger(id) || id <= 0) return { title: "Jogador" };
+
+  const profile = await getProfile(id);
+  const nome = profile?.personaname ?? `Jogador ${id}`;
+  return {
+    title: nome,
+    description: `Rank, histórico de partidas e builds de ${nome} em Deadlock.`,
+  };
+}
+
 export default async function PlayerPage({
   params,
 }: {

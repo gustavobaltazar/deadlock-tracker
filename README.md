@@ -36,6 +36,20 @@ npm run dev
 Abra <http://localhost:3000>. Não há variáveis de ambiente nem credenciais: todos os
 endpoints usados são públicos.
 
+## Deploy
+
+O projeto roda sem nenhuma variável de ambiente. Para produção, duas são
+opcionais (ver `.env.example`):
+
+| Variável | Para quê |
+| --- | --- |
+| `DEADLOCK_API_KEY` | Eleva os limites da Deadlock API. Sem ela, os limites valem por IP — e em produção o IP do servidor é compartilhado por todos os visitantes. |
+| `NEXT_PUBLIC_SITE_URL` | URL pública, usada nos metadados de compartilhamento. Detectada automaticamente na Vercel. |
+
+O endpoint mais restrito é `/v1/matches/metadata`: **30 req/min por IP** contra
+**30 req/10s com chave**. As respostas são cacheadas no servidor, então visitas ao
+mesmo jogador não repetem a chamada.
+
 ## Notas sobre os dados
 
 Alguns comportamentos da fonte que afetam o que aparece na tela:
