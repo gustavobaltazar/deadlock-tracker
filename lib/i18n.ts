@@ -163,11 +163,11 @@ const pt: Dictionary = {
     },
   },
   search: {
-    placeholder: "Nome, account ID ou link do perfil Steam",
+    placeholder: "Nome, ID da conta ou link do perfil Steam",
     label: "Buscar jogador",
     empty: "Nenhum jogador encontrado.",
     unresolvedUrl: "Não foi possível resolver essa URL da Steam.",
-    hint: "Aceita nome, account ID ou o link do perfil Steam. Contas inativas nos últimos 30 dias podem não aparecer na busca por nome.",
+    hint: "Aceita nome, ID da conta ou o link do perfil Steam. Contas inativas nos últimos 30 dias podem não aparecer na busca por nome.",
     gamesIn30d: "{n} jogos / 30d",
   },
   player: {
