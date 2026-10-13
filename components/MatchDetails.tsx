@@ -215,8 +215,13 @@ function BuildScore({ analysis }: { analysis: BuildAnalysis }) {
               >
                 {/* A troca acontece dentro do mesmo tier, então o preço é o mesmo
                     dos dois lados e cabe uma etiqueta só. */}
-                <span className="shrink-0 rounded border border-border bg-bg px-1.5 py-0.5 text-[10px] font-bold text-accent-dim tabular-nums">
-                  T{swap.out.item.tier} · {swap.out.item.cost.toLocaleString("pt-BR")}
+                {/* 9999 é sentinela para itens fora da loja normal, não um
+                    preço — nesse caso mostramos só o tier. */}
+                <span className="shrink-0 rounded border border-border bg-bg px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-accent-dim">
+                  T{swap.out.item.tier}
+                  {swap.out.item.cost > 0 && swap.out.item.cost !== 9999
+                    ? " · " + swap.out.item.cost.toLocaleString("pt-BR")
+                    : ""}
                 </span>
                 <SwapItem stat={swap.out} tone="out" />
                 <span className="text-muted">→</span>

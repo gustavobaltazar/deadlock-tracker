@@ -95,9 +95,12 @@ export type ItemView = {
   image: string | null;
   /** "weapon" | "vitality" | "spirit" */
   slot: string;
-  /** 1 a 5. No Deadlock o tier determina o preço: 800/1600/3200/6400/9999. */
+  /** No Deadlock o tier determina o preço: T1=800, T2=1600, T3=3200, T4=6400. */
   tier: number;
-  /** Custo em almas. */
+  /**
+   * Custo em almas. Itens fora da loja normal (os 23 marcados como tier 5)
+   * vêm com o sentinela 9999, que não é um preço de verdade.
+   */
   cost: number;
 };
 
@@ -617,7 +620,7 @@ export async function analyzeBuild(
     // Pareamos o pior item que o jogador levou com o melhor que deixou de fora,
     // enquanto a troca for vantajosa.
     // Só trocamos itens do MESMO tier. No Deadlock o tier é o preço
-    // (800/1600/3200/6400/9999), então sugerir um T3 no lugar de um T4 não é
+    // (800/1600/3200/6400), então sugerir um T3 no lugar de um T4 não é
     // melhorar a build: é gastar quase metade das almas e abrir mão do power
     // spike daquele slot. A comparação só é honesta dentro do mesmo orçamento.
     const byTier = new Map<
