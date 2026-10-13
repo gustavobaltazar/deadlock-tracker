@@ -40,8 +40,7 @@ every endpoint used is public.
 
 ## Deploy
 
-The project runs with no environment variables. Two are optional in production
-(see `.env.example`):
+The project runs with no environment variables. Two are optional in production:
 
 | Variable | Purpose |
 | --- | --- |
