@@ -164,8 +164,11 @@ export default async function PlayerPage({
           </section>
         </div>
 
-        {/* Coluna direita: histórico */}
-        <section className="rounded-lg border border-border bg-surface">
+        {/* Coluna direita: histórico.
+            `min-w-0` é necessário: itens de grid nascem com `min-width: auto`, então a
+            coluna 1fr não encolheria abaixo da largura do conteúdo e vazaria para
+            fora do container, desalinhando com o cabeçalho do perfil. */}
+        <section className="min-w-0 rounded-lg border border-border bg-surface">
           <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
             {t.player.matchHistory}
             <span className="ml-2 text-xs font-normal text-muted">
