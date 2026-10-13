@@ -1,5 +1,5 @@
 {
-  "name": "deadlock-tracker",
+  "name": "searchlock",
   "version": "0.1.0",
   "private": true,
   "scripts": {

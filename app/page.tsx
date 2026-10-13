@@ -24,7 +24,7 @@ export default function HomePage() {
 
       <main className="mx-auto flex max-w-[640px] flex-col items-center px-4 pt-24 pb-16 text-center sm:pt-32">
         <h1 className="text-4xl font-extrabold tracking-tight drop-shadow-lg sm:text-5xl">
-          DEADLOCK<span className="text-accent">.TRACKER</span>
+          SEARCH<span className="text-accent">LOCK</span>
         </h1>
         <p className="mt-3 text-sm text-eggshell drop-shadow">
           Veja rank, histórico de partidas e desempenho por herói de qualquer jogador.

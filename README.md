@@ -1,4 +1,4 @@
-# Deadlock Tracker
+# SEARCHLOCK
 
 Tracker de estatísticas de [Deadlock](https://store.steampowered.com/app/1422450/Deadlock/):
 busca de jogadores, histórico de partidas, builds e comparação da sua build com a de

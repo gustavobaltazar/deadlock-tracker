@@ -18,17 +18,17 @@ const description =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Deadlock Tracker",
-    template: "%s · Deadlock Tracker",
+    default: "SEARCHLOCK",
+    template: "%s · SEARCHLOCK",
   },
   description,
   openGraph: {
-    title: "Deadlock Tracker",
+    title: "SEARCHLOCK",
     description,
     type: "website",
     locale: "pt_BR",
   },
-  twitter: { card: "summary", title: "Deadlock Tracker", description },
+  twitter: { card: "summary", title: "SEARCHLOCK", description },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="border-b border-border bg-surface">
           <div className="mx-auto flex h-14 max-w-[1100px] items-center px-4">
             <Link href="/" className="text-lg font-extrabold tracking-tight">
-              DEADLOCK<span className="text-accent">.TRACKER</span>
+              SEARCH<span className="text-accent">LOCK</span>
             </Link>
           </div>
         </header>
