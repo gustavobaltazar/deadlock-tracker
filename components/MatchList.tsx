@@ -60,7 +60,7 @@ export default function MatchList({
           return (
             <li
               key={m.match_id}
-              className="overflow-hidden rounded-md border border-transparent data-[open=true]:border-border"
+              className="rounded-md border border-transparent data-[open=true]:border-border"
               data-open={isOpen}
             >
               <MatchRow

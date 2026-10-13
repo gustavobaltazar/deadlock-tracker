@@ -62,7 +62,7 @@ export default function MatchDetails({
   }
 
   return (
-    <div className="space-y-4 border-t border-border bg-bg/40 px-3 py-4">
+    <div className="space-y-4 rounded-b-md border-t border-border bg-bg/40 px-3 py-4">
       <div className="grid gap-4 lg:grid-cols-2">
         {TEAMS.map((team) => {
           const players = data.detail.players

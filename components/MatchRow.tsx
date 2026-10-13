@@ -34,6 +34,7 @@ export default function MatchRow({
       }}
       className={
         "flex cursor-pointer items-center gap-2.5 border-l-4 px-2.5 py-2.5 transition-colors " +
+        (expanded ? "rounded-t-md " : "rounded-md ") +
         (win
           ? "border-l-win bg-win-bg/40 hover:bg-win-bg/70"
           : "border-l-loss bg-loss-bg/40 hover:bg-loss-bg/70")
