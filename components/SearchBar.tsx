@@ -17,6 +17,10 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  // account_id já resolvido pelo servidor quando a busca é um ID, um SteamID64
+  // ou uma URL de perfil Steam.
+  const [exact, setExact] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -25,6 +29,8 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
     const term = query.trim();
     if (term.length < 2) {
       setResults([]);
+      setExact(null);
+      setError(null);
       setLoading(false);
       return;
     }
@@ -36,8 +42,14 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
         const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`, {
           signal: controller.signal,
         });
-        const data = (await res.json()) as { results?: Result[] };
+        const data = (await res.json()) as {
+          results?: Result[];
+          exact?: number;
+          error?: string;
+        };
         setResults(data.results ?? []);
+        setExact(data.exact ?? null);
+        setError(data.error ?? null);
         setHighlight(0);
         setOpen(true);
       } catch {
@@ -72,10 +84,9 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    // Um account_id digitado direto leva à página do jogador.
+    // O servidor já resolveu ID, SteamID64 ou URL de perfil: vai direto.
     if (event.key === "Enter") {
-      const term = query.trim();
-      if (/^\d{4,}$/.test(term)) return go(Number(term));
+      if (exact != null) return go(exact);
       if (results[highlight]) return go(results[highlight].account_id);
       return;
     }
@@ -109,7 +120,7 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
           onFocus={() => results.length > 0 && setOpen(true)}
-          placeholder="Buscar jogador por nome Steam ou account ID"
+          placeholder="Nome, account ID ou link do perfil Steam"
           className="w-full bg-transparent text-base outline-none placeholder:text-muted"
           aria-label="Buscar jogador"
         />
@@ -124,7 +135,9 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
           className="absolute z-20 mt-1 max-h-[22rem] w-full overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface shadow-xl"
         >
           {results.length === 0 && !loading && (
-            <li className="px-4 py-3 text-sm text-muted">Nenhum jogador encontrado.</li>
+            <li className="px-4 py-3 text-sm text-muted">
+              {error ?? "Nenhum jogador encontrado."}
+            </li>
           )}
           {results.map((r, i) => (
             <li key={r.account_id}>

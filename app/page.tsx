@@ -35,8 +35,8 @@ export default function HomePage() {
         </div>
 
         <p className="mt-4 text-xs text-muted drop-shadow">
-          Dica: digite o nome do perfil Steam. Contas inativas nos últimos 30 dias podem
-          não aparecer na busca.
+          Aceita nome, account ID ou o link do perfil Steam. Contas inativas nos últimos
+          30 dias podem não aparecer na busca por nome.
         </p>
       </main>
     </>

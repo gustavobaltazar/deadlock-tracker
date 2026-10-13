@@ -9,7 +9,8 @@ Projeto não oficial, sem vínculo com a Valve. Os dados vêm da
 
 ## O que faz
 
-- **Busca por nome Steam** — sem precisar de chave da Steam Web API.
+- **Busca flexível** — nome Steam, account ID, SteamID64, SteamID3 ou o link do
+  perfil (`/profiles/<id>` e `/id/<vanity>`), sem precisar de chave da Steam Web API.
 - **Perfil do jogador** — elo atual, heróis mais jogados, taxa de vitória e KDA das
   últimas partidas, com o cabeçalho tematizado pelo herói que o jogador mais vence.
 - **Histórico paginado** — todas as partidas que a API conhece, com a build de cada uma.
