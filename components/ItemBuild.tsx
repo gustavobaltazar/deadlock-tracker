@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useI18n } from "./I18nProvider";
 import SoulIcon from "./SoulIcon";
 import type { ItemSection, ItemStat, ItemView, RichText } from "@/lib/api";
@@ -76,11 +78,59 @@ export default function ItemBuild({
   );
 }
 
+/** Largura do cartão, usada para centralizá-lo e mantê-lo dentro da janela. */
+const LARGURA = 320;
+/** Folga entre o ícone e o cartão, e entre o cartão e a borda da janela. */
+const FOLGA = 8;
+
+type Posicao = { left: number; top: number; acima: boolean };
+
 function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
   const size = compact ? "size-[19px]" : "size-6";
+  const ancora = useRef<HTMLSpanElement>(null);
+  const [pos, setPos] = useState<Posicao | null>(null);
+
+  /**
+   * O cartão é posicionado em coordenadas de janela porque vive num portal:
+   * dentro da árvore ele seria recortado pelos contêineres com `overflow-hidden`
+   * (a caixa de cada time, por exemplo) e pelas bordas da lista.
+   */
+  const posicionar = useCallback(() => {
+    const el = ancora.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const acima = r.top >= window.innerHeight - r.bottom;
+    const centro = r.left + r.width / 2 - LARGURA / 2;
+    setPos({
+      left: Math.min(
+        Math.max(centro, FOLGA),
+        window.innerWidth - LARGURA - FOLGA,
+      ),
+      top: acima ? r.top - FOLGA : r.bottom + FOLGA,
+      acima,
+    });
+  }, []);
+
+  // Como a posição é fixa na janela, ela precisa ser refeita quando a página
+  // rola ou muda de tamanho com o cartão aberto.
+  const aberto = pos !== null;
+  useEffect(() => {
+    if (!aberto) return;
+    window.addEventListener("scroll", posicionar, true);
+    window.addEventListener("resize", posicionar);
+    return () => {
+      window.removeEventListener("scroll", posicionar, true);
+      window.removeEventListener("resize", posicionar);
+    };
+  }, [aberto, posicionar]);
 
   return (
-    <span className="group/item relative flex items-center justify-center">
+    <span
+      ref={ancora}
+      className="relative flex items-center justify-center"
+      onMouseEnter={posicionar}
+      onMouseLeave={() => setPos(null)}
+    >
       {item.image ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -98,7 +148,7 @@ function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
         </span>
       )}
 
-      <ItemCard item={item} />
+      {pos && createPortal(<ItemCard item={item} pos={pos} />, document.body)}
     </span>
   );
 }
@@ -107,11 +157,8 @@ function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
  * Cartão do item no hover, reproduzindo o da loja do jogo: faixa de título na
  * cor da categoria, bônus permanentes, linha de passivo/ativo com o cooldown
  * em selo, descrição e os atributos em destaque.
- *
- * Em CSS puro (sem estado) para que a lista de partidas não precise virar um
- * componente controlado só por causa do hover.
  */
-function ItemCard({ item }: { item: ItemView }) {
+function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
   const { locale, t } = useI18n();
   const cor = SLOT_COLOR[item.slot] ?? "#aeaa94";
   const temPreco = item.cost > 0 && item.cost !== 9999;
@@ -123,8 +170,16 @@ function ItemCard({ item }: { item: ItemView }) {
 
   return (
     <span
-      className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden w-[320px] -translate-x-1/2 flex-col overflow-hidden rounded-md text-left shadow-2xl group-hover/item:flex"
-      style={{ background: faixa(cor, 36) }}
+      className={
+        "grao pointer-events-none fixed z-50 flex flex-col overflow-hidden rounded-md text-left shadow-2xl " +
+        (pos.acima ? "-translate-y-full" : "")
+      }
+      style={{
+        left: pos.left,
+        top: pos.top,
+        width: LARGURA,
+        background: faixa(cor, 36),
+      }}
     >
       {/* Faixa de título, na cor cheia da categoria */}
       <span

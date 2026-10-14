@@ -48,3 +48,22 @@ body {
     var(--font-quicksand), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, Arial, sans-serif;
 }
+
+/*
+ * Grão do cartão de item. O jogo cobre o cartão com uma retícula fina — medida
+ * no original, são pontos a cada 3px com amplitude de ~5% sobre a cor da faixa,
+ * o que tira o aspecto chapado das áreas grandes. As duas camadas (clara e
+ * escura, em fases diferentes) reproduzem o relevo do original; a retícula é
+ * desenhada pelo navegador, sem imagem.
+ */
+.grao::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.06) 0.5px, transparent 0.6px),
+    radial-gradient(rgba(0, 0, 0, 0.06) 0.5px, transparent 0.6px);
+  background-size: 3px 3px;
+  background-position: 0 0, 1px 2px;
+}
