@@ -95,15 +95,20 @@ export type ItemStat = {
   label: string;
   value: string;
   icon: string | null;
-  /** O jogo destaca estas acima das demais. */
-  important: boolean;
+  /** Família do atributo (fire_rate, healing, cooldown…), define a cor. */
+  cssClass: string | null;
+  /** O jogo marca estes como "Conditional": só valem quando o efeito dispara. */
+  conditional: boolean;
 };
 
 export type ItemSection = {
-  /** "innate" = passivo; "active" = habilidade com cooldown. */
+  /** "innate" = bônus permanente; "passive"/"active" = o efeito do item. */
   kind: string;
   text: RichText | null;
-  stats: ItemStat[];
+  /** Atributos em destaque, exibidos em caixas. */
+  important: ItemStat[];
+  /** Demais atributos, em lista. */
+  details: ItemStat[];
 };
 
 export type ItemView = {
@@ -342,10 +347,13 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
     tooltip_sections?: RawSection[] | null;
   };
   type RawProperty = {
-    value?: string | null;
+    value?: string | number | null;
     label?: string | null;
+    prefix?: string | null;
     postfix?: string | null;
     icon?: string | null;
+    css_class?: string | null;
+    usage_flags?: string[] | null;
   };
   type RawSection = {
     section_type?: string | null;
@@ -391,30 +399,46 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
     properties: Record<string, RawProperty> | null | undefined,
     descricao: RichText | null,
   ): ItemSection[] {
-    const textoDe = (t: RichText | null) =>
-      (t ?? []).map((parte) => parte.text).join("").trim();
-    const textoDescricao = textoDe(descricao);
     if (!sections || !properties) return [];
 
-    const resolve = (chaves: string[] | null | undefined, important: boolean) =>
+    const textoDe = (t: RichText | null) =>
+      (t ?? [])
+        .map((parte) => parte.text)
+        .join("")
+        .trim();
+    const textoDescricao = textoDe(descricao);
+
+    const resolve = (chaves: string[] | null | undefined): ItemStat[] =>
       (chaves ?? [])
         .map((chave) => {
           const prop = properties[chave];
           if (!prop?.label || prop.value == null || prop.value === "") return null;
-          // Parte dos valores já vem com a unidade ("25m"), e o postfix a
-          // repetiria ("25mm"); só acrescentamos quando ainda falta.
-          // Parte dos valores já vem com a unidade ("1.75m") e o postfix a
-          // repetiria. A comparação ignora espaços porque o postfix às vezes
-          // chega como " m", que não casaria com o fim de "1.75m".
-          const bruto = String(prop.value);
+
+          // Parte dos valores já chega com a unidade ("1.75m", "4m") e o
+          // postfix a repetiria — às vezes de forma não óbvia, como "4m" +
+          // " m/s" = "4mm/s". Quando o valor termina em letra, ele já traz a
+          // própria unidade e o postfix é descartado. Verificado contra o
+          // catálogo inteiro: nenhum valor fica com unidade duplicada.
+          const bruto = String(prop.value).trim();
           const unidade = (prop.postfix ?? "").trim();
+          const jaTemUnidade = /[a-z]$/i.test(bruto);
+          const comUnidade =
+            unidade && !jaTemUnidade ? bruto + unidade : bruto;
+
+          // `{s:sign}` pede o sinal explícito. O jogo só o aplica a números
+          // puros: valores que já chegam formatados com unidade ("0.75m")
+          // aparecem sem o "+".
+          const pedeSinal = (prop.prefix ?? "").includes("sign");
+          const numeroPuro = /^\d/.test(bruto);
           const value =
-            unidade && !bruto.trim().endsWith(unidade) ? bruto + unidade : bruto;
+            pedeSinal && numeroPuro ? "+" + comUnidade : comUnidade;
+
           return {
             label: prop.label,
             value,
             icon: prop.icon ?? null,
-            important,
+            cssClass: prop.css_class ?? null,
+            conditional: (prop.usage_flags ?? []).includes("ConditionallyApplied"),
           };
         })
         .filter((stat): stat is ItemStat => stat !== null);
@@ -428,15 +452,18 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
             // Várias seções repetem palavra por palavra a descrição do item;
             // mostrar as duas duplicaria o texto no cartão.
             text: textoDe(texto) === textoDescricao ? null : texto,
-            stats: [
-              ...resolve(attr.important_properties, true),
-              ...resolve(attr.elevated_properties, true),
-              ...resolve(attr.properties, false),
+            important: [
+              ...resolve(attr.important_properties),
+              ...resolve(attr.elevated_properties),
             ],
+            details: resolve(attr.properties),
           };
         }),
       )
-      .filter((section) => section.text || section.stats.length > 0);
+      .filter(
+        (section) =>
+          section.text || section.important.length > 0 || section.details.length > 0,
+      );
   }
 }
 
