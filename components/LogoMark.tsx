@@ -19,7 +19,7 @@ export default function LogoMark({ className }: { className?: string }) {
           <circle cx="24" cy="24" r="14" />
         </clipPath>
       </defs>
-      <g clip-path="url(#logomark-lens)" fill="currentColor">
+      <g clipPath="url(#logomark-lens)" fill="currentColor">
         <rect x="10" y="25" width="8" height="15" />
         <rect x="20" y="15" width="9" height="25" />
         <rect x="31" y="22" width="8" height="18" />
