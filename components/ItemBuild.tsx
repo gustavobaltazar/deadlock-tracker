@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type MouseEvent as EventoReact,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { useI18n } from "./I18nProvider";
 import SoulIcon from "./SoulIcon";
@@ -85,10 +91,26 @@ const FOLGA = 8;
 
 type Posicao = { left: number; top: number; acima: boolean };
 
+/**
+ * Só um cartão fica aberto por vez. O controle é global porque o `mouseleave`
+ * de um ícone não é garantido: rolar a página tira o ícone de baixo do cursor
+ * sem disparar evento nenhum nele, e o ícone seguinte abriria o seu cartão com
+ * o anterior ainda na tela.
+ */
+let fecharAberto: (() => void) | null = null;
+
 function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
   const size = compact ? "size-[19px]" : "size-6";
   const ancora = useRef<HTMLSpanElement>(null);
+  const cursor = useRef({ x: 0, y: 0 });
   const [pos, setPos] = useState<Posicao | null>(null);
+
+  const esconder = useCallback(() => setPos(null), []);
+
+  const fechar = useCallback(() => {
+    esconder();
+    if (fecharAberto === esconder) fecharAberto = null;
+  }, [esconder]);
 
   /**
    * O cartão é posicionado em coordenadas de janela porque vive num portal:
@@ -111,25 +133,59 @@ function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
     });
   }, []);
 
-  // Como a posição é fixa na janela, ela precisa ser refeita quando a página
-  // rola ou muda de tamanho com o cartão aberto.
+  const abrir = useCallback(
+    (e: EventoReact) => {
+      cursor.current = { x: e.clientX, y: e.clientY };
+      if (fecharAberto && fecharAberto !== esconder) fecharAberto();
+      fecharAberto = esconder;
+      posicionar();
+    },
+    [esconder, posicionar],
+  );
+
+  /*
+   * Com o cartão aberto, a posição é fixa na janela e precisa acompanhar o
+   * scroll e o redimensionamento. Antes disso vem a pergunta que o navegador
+   * não responde sozinho: o ícone ainda está sob o cursor? Se o scroll o levou
+   * embora, o cartão fecha — é esse o caso em que o `mouseleave` não dispara.
+   */
   const aberto = pos !== null;
   useEffect(() => {
     if (!aberto) return;
-    window.addEventListener("scroll", posicionar, true);
-    window.addEventListener("resize", posicionar);
-    return () => {
-      window.removeEventListener("scroll", posicionar, true);
-      window.removeEventListener("resize", posicionar);
+
+    const mover = (e: MouseEvent) => {
+      cursor.current = { x: e.clientX, y: e.clientY };
     };
-  }, [aberto, posicionar]);
+    const revisar = () => {
+      const r = ancora.current?.getBoundingClientRect();
+      const { x, y } = cursor.current;
+      if (!r || x < r.left || x > r.right || y < r.top || y > r.bottom) {
+        fechar();
+      } else {
+        posicionar();
+      }
+    };
+
+    window.addEventListener("mousemove", mover, { passive: true });
+    window.addEventListener("scroll", revisar, true);
+    window.addEventListener("resize", revisar);
+    return () => {
+      window.removeEventListener("mousemove", mover);
+      window.removeEventListener("scroll", revisar, true);
+      window.removeEventListener("resize", revisar);
+    };
+  }, [aberto, fechar, posicionar]);
+
+  // Recolher o detalhe da partida desmonta o ícone com o cartão aberto, e aí
+  // também não há `mouseleave` para avisar.
+  useEffect(() => fechar, [fechar]);
 
   return (
     <span
       ref={ancora}
       className="relative flex items-center justify-center"
-      onMouseEnter={posicionar}
-      onMouseLeave={() => setPos(null)}
+      onMouseEnter={abrir}
+      onMouseLeave={fechar}
     >
       {item.image ? (
         // eslint-disable-next-line @next/next/no-img-element
