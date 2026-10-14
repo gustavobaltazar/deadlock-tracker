@@ -10,7 +10,13 @@ import {
 import { createPortal } from "react-dom";
 import { useI18n } from "./I18nProvider";
 import SoulIcon from "./SoulIcon";
-import type { ItemSection, ItemStat, ItemView, RichText } from "@/lib/api";
+import type {
+  ItemRef,
+  ItemSection,
+  ItemStat,
+  ItemView,
+  RichText,
+} from "@/lib/api";
 
 /** Cores oficiais das categorias de item (de /v1/assets/colors). */
 const SLOT_COLOR: Record<string, string> = {
@@ -243,8 +249,10 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
         style={{ background: `linear-gradient(135deg, ${cor}, ${faixa(cor, 86)})` }}
       >
         <span
-          className="text-[17px] font-extrabold leading-tight"
-          style={{ color: TEXTO }}
+          className="text-[21px] font-bold leading-tight"
+          // A sombra é o que dá peso ao nome no cartão do jogo: a Quicksand
+          // para no peso 700 e sozinha ela fica leve sobre a faixa colorida.
+          style={{ color: TEXTO, textShadow: "0 2px 2px rgba(0,0,0,.35)" }}
         >
           {item.name}
         </span>
@@ -292,6 +300,57 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
           <Rich text={item.description} />
         </span>
       )}
+
+      <Caminho
+        rotulo={t.item.upgradesFrom}
+        itens={item.upgradesFrom}
+        cor={cor}
+      />
+      <Caminho rotulo={t.item.upgradesTo} itens={item.upgradesTo} cor={cor} />
+    </span>
+  );
+}
+
+/**
+ * Um lado do caminho de melhoria: de quais itens este vem, ou em quais ele
+ * vira. A maioria dos itens não tem nenhum dos dois e a faixa simplesmente
+ * não aparece.
+ */
+function Caminho({
+  rotulo,
+  itens,
+  cor,
+}: {
+  rotulo: string;
+  itens: ItemRef[];
+  cor: string;
+}) {
+  if (itens.length === 0) return null;
+
+  return (
+    <span
+      className="flex flex-col gap-1.5 px-3.5 py-2"
+      style={{ background: faixa(cor, 22) }}
+    >
+      <span className="text-[10px] font-bold uppercase tracking-wide text-[#cdcdcd]">
+        {rotulo}
+      </span>
+      {itens.map((ref) => (
+        <span key={ref.id} className="flex items-center gap-2">
+          {ref.image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={ref.image}
+              alt=""
+              loading="lazy"
+              className="size-5 shrink-0 rounded-[3px] object-contain"
+            />
+          )}
+          <span className="text-[12px] font-semibold" style={{ color: TEXTO }}>
+            {ref.name}
+          </span>
+        </span>
+      ))}
     </span>
   );
 }

@@ -131,6 +131,17 @@ export type ItemView = {
   activation: string | null;
   /** Seções do tooltip oficial, já resolvidas em rótulo + valor. */
   sections: ItemSection[];
+  /** Itens que este substitui ao ser comprado. */
+  upgradesFrom: ItemRef[];
+  /** Itens em que este pode virar. */
+  upgradesTo: ItemRef[];
+};
+
+/** Item citado dentro do cartão de outro, só com o necessário para exibi-lo. */
+export type ItemRef = {
+  id: number;
+  name: string;
+  image: string | null;
 };
 
 /**
@@ -334,6 +345,8 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
     id: number;
     name: string;
     type: string;
+    class_name?: string | null;
+    component_items?: string[] | null;
     item_slot_type?: string | null;
     item_tier?: number | null;
     cost?: number | string | null;
@@ -367,9 +380,12 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
 
   const raw = await get<RawItem[]>("/v1/assets/items", 86400);
   const map = new Map<number, ItemView>();
+  // `class_name` é a chave com que o jogo liga um item aos seus componentes.
+  const porClasse = new Map<string, number>();
 
   for (const i of raw) {
     if (i.type !== "upgrade") continue;
+    if (i.class_name) porClasse.set(i.class_name, i.id);
     const descricao = parseRichText(i.description?.desc);
     map.set(i.id, {
       id: i.id,
@@ -382,9 +398,31 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
       description: descricao,
       activation: i.activation ?? null,
       sections: buildSections(i.tooltip_sections, i.properties, descricao),
+      upgradesFrom: [],
+      upgradesTo: [],
     });
   }
+
+  /*
+   * Caminho de melhoria. O catálogo guarda só um lado da relação — quais itens
+   * cada um substitui — e o sentido inverso sai invertendo a mesma lista.
+   */
+  for (const i of raw) {
+    const destino = map.get(i.id);
+    if (!destino) continue;
+    for (const classe of i.component_items ?? []) {
+      const origem = map.get(porClasse.get(classe) ?? -1);
+      if (!origem) continue;
+      destino.upgradesFrom.push(ref(origem));
+      origem.upgradesTo.push(ref(destino));
+    }
+  }
+
   return map;
+
+  function ref(item: ItemView): ItemRef {
+    return { id: item.id, name: item.name, image: item.image };
+  }
 
   /**
    * Monta as seções do tooltip.

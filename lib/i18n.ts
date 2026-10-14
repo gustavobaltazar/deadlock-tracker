@@ -120,6 +120,8 @@ const en = {
     passive: "Passive",
     active: "Active",
     souls: "souls",
+    upgradesFrom: "Upgrades from",
+    upgradesTo: "Upgrades to",
   },
   modes: {
     1: "Normal",
@@ -255,6 +257,8 @@ const pt: Dictionary = {
     passive: "Passivo",
     active: "Ativo",
     souls: "almas",
+    upgradesFrom: "Evolui de",
+    upgradesTo: "Evolui para",
   },
   modes: {
     1: "Normal",
