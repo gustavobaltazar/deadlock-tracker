@@ -2,6 +2,7 @@
 
 import {
   type MouseEvent as EventoReact,
+  type ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -132,6 +133,43 @@ let fecharAberto: (() => void) | null = null;
 
 function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
   const size = compact ? "size-[19px]" : "size-6";
+
+  return (
+    <ItemHover item={item} className="flex items-center justify-center">
+      {item.image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={item.image}
+          alt={item.name}
+          loading="lazy"
+          className={`${size} rounded-[3px] object-contain`}
+        />
+      ) : (
+        <span
+          className={`flex ${size} items-center justify-center rounded-[3px] bg-surface-2 text-[10px] font-bold`}
+          style={{ color: (PALETA[item.slot] ?? PALETA.weapon).claro }}
+        >
+          {item.name.charAt(0)}
+        </span>
+      )}
+    </ItemHover>
+  );
+}
+
+/**
+ * Prende o cartão do item a qualquer elemento — o ícone de uma build, a linha
+ * de uma troca sugerida, um item de lista. Quem chama decide o que é a área
+ * sensível; aqui ficam só a abertura e o posicionamento.
+ */
+export function ItemHover({
+  item,
+  className,
+  children,
+}: {
+  item: ItemView;
+  className?: string;
+  children: ReactNode;
+}) {
   const ancora = useRef<HTMLSpanElement>(null);
   const cursor = useRef({ x: 0, y: 0 });
   const [pos, setPos] = useState<Posicao | null>(null);
@@ -214,27 +252,11 @@ function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
   return (
     <span
       ref={ancora}
-      className="relative flex items-center justify-center"
+      className={className}
       onMouseEnter={abrir}
       onMouseLeave={fechar}
     >
-      {item.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={item.image}
-          alt={item.name}
-          loading="lazy"
-          className={`${size} rounded-[3px] object-contain`}
-        />
-      ) : (
-        <span
-          className={`flex ${size} items-center justify-center rounded-[3px] bg-surface-2 text-[10px] font-bold`}
-          style={{ color: (PALETA[item.slot] ?? PALETA.weapon).claro }}
-        >
-          {item.name.charAt(0)}
-        </span>
-      )}
-
+      {children}
       {pos && createPortal(<ItemCard item={item} pos={pos} />, document.body)}
     </span>
   );

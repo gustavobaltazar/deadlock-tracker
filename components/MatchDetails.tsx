@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "./I18nProvider";
-import ItemBuild from "./ItemBuild";
+import ItemBuild, { ItemHover } from "./ItemBuild";
 import SoulIcon from "./SoulIcon";
 import type { BuildAnalysis, MatchDetail, MatchPlayer } from "@/lib/api";
 import { compact as compactNum } from "@/lib/format";
@@ -290,26 +290,28 @@ function SwapItem({
   const pct = Math.round(stat.pickRate * 100);
   return (
     <span className="inline-flex items-center gap-1.5">
-      {stat.item.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={stat.item.image}
-          alt=""
+      <ItemHover item={stat.item} className="inline-flex items-center gap-1.5">
+        {stat.item.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={stat.item.image}
+            alt=""
+            className={
+              "size-5 shrink-0 rounded bg-bg object-contain " +
+              (tone === "out" ? "opacity-50 grayscale" : "")
+            }
+          />
+        ) : (
+          <span className="size-5 shrink-0 rounded bg-bg" />
+        )}
+        <span
           className={
-            "size-5 shrink-0 rounded bg-bg object-contain " +
-            (tone === "out" ? "opacity-50 grayscale" : "")
+            tone === "out" ? "text-muted line-through" : "font-semibold text-ink"
           }
-        />
-      ) : (
-        <span className="size-5 shrink-0 rounded bg-bg" />
-      )}
-      <span
-        className={
-          tone === "out" ? "text-muted line-through" : "font-semibold text-ink"
-        }
-      >
-        {stat.item.name}
-      </span>
+        >
+          {stat.item.name}
+        </span>
+      </ItemHover>
       <span
         className={
           "tabular-nums " + (tone === "out" ? "text-muted" : "text-accent")
@@ -351,22 +353,27 @@ function StatRow({ stat }: { stat: BuildAnalysis["hits"][number] }) {
 
   return (
     <li className="flex items-center gap-2">
-      {stat.item.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={stat.item.image}
-          alt=""
-          className="size-5 shrink-0 rounded bg-bg object-contain"
-        />
-      ) : (
-        <span className="size-5 shrink-0 rounded bg-bg" />
-      )}
-      <span className="min-w-0 flex-1 truncate text-xs">
-        {stat.item.name}
-        <span className="ml-1.5 text-[10px] text-muted tabular-nums">
-          T{stat.item.tier}
+      <ItemHover
+        item={stat.item}
+        className="flex min-w-0 flex-1 items-center gap-2"
+      >
+        {stat.item.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={stat.item.image}
+            alt=""
+            className="size-5 shrink-0 rounded bg-bg object-contain"
+          />
+        ) : (
+          <span className="size-5 shrink-0 rounded bg-bg" />
+        )}
+        <span className="min-w-0 flex-1 truncate text-xs">
+          {stat.item.name}
+          <span className="ml-1.5 text-[10px] text-muted tabular-nums">
+            T{stat.item.tier}
+          </span>
         </span>
-      </span>
+      </ItemHover>
       <span className="w-20 shrink-0">
         <span className="block h-1 w-full overflow-hidden rounded bg-surface-2">
           <span
