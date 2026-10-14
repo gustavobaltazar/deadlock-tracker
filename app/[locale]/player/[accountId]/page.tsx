@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import ActivityHeatmap, { type ActivityGame } from "@/components/ActivityHeatmap";
 import HeroStatsList from "@/components/HeroStatsList";
 import DataFreshness from "@/components/DataFreshness";
 import MatchList from "@/components/MatchList";
@@ -22,6 +23,8 @@ import { kda, percent } from "@/lib/format";
 import { fill, getDictionary, isLocale, type Locale } from "@/lib/i18n";
 
 const RECENT_COUNT = 20;
+/** Semanas do mapa de atividade: 20 colunas cabem na coluna lateral. */
+const ACTIVITY_WEEKS = 20;
 
 /** Título por jogador, para links compartilhados identificarem o perfil. */
 export async function generateMetadata({
@@ -94,6 +97,13 @@ export default async function PlayerPage({
   const topHeroes = [...heroStats]
     .sort((a, b) => b.matches_played - a.matches_played)
     .slice(0, 8);
+  // Só a janela do mapa viaja para o cliente, reduzida a [início, venceu]. Um
+  // dia a mais de folga cobre a diferença entre o fuso do servidor e o do
+  // visitante, que é quem decide em que dia cada partida cai.
+  const activityFrom = Date.now() / 1000 - (ACTIVITY_WEEKS * 7 + 1) * 86400;
+  const activity: ActivityGame[] = matches
+    .filter((m) => m.start_time >= activityFrom)
+    .map((m) => [m.start_time, isWin(m)]);
 
   return (
     <main className="mx-auto max-w-[1100px] px-4 py-6">
@@ -161,6 +171,16 @@ export default async function PlayerPage({
               {t.player.topHeroes}
             </h2>
             <HeroStatsList stats={topHeroes} heroes={heroes} t={t} />
+          </section>
+
+          <section className="rounded-lg border border-border bg-surface">
+            <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
+              {t.player.activity}
+              <span className="ml-2 text-xs font-normal text-muted">
+                {fill(t.player.activityRange, { n: ACTIVITY_WEEKS })}
+              </span>
+            </h2>
+            <ActivityHeatmap games={activity} weeks={ACTIVITY_WEEKS} />
           </section>
         </div>
 

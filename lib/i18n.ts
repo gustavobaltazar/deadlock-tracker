@@ -60,6 +60,11 @@ const en = {
     heroLine: "{matches} games · {kda} KDA",
     matchHistory: "Match history",
     recorded: "{n} recorded",
+    activity: "Activity",
+    activityRange: "last {n} weeks",
+    activityDays: "Played on {n} days",
+    activityLess: "Less",
+    activityMore: "More",
   },
   freshness: {
     lastMatch: "Most recent match on record: {ago} ago.",
@@ -196,6 +201,11 @@ const pt: Dictionary = {
     heroLine: "{matches} jogos · {kda} KDA",
     matchHistory: "Histórico de partidas",
     recorded: "{n} registradas",
+    activity: "Atividade",
+    activityRange: "últimas {n} semanas",
+    activityDays: "Jogou em {n} dias",
+    activityLess: "Menos",
+    activityMore: "Mais",
   },
   freshness: {
     lastMatch: "Partida mais recente registrada: {ago} atrás.",
