@@ -278,6 +278,10 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
         top: pos.top,
         width: LARGURA,
         background: banda(cat.faixa, CORPO),
+        // O jogo desenha todo o texto do cartão com sombra. É ela que dá o
+        // peso das letras — a Quicksand para no 700 e sem a sombra os números
+        // ficam finos demais perto do original.
+        textShadow: "0 1px 2px rgba(0,0,0,.45)",
       }}
     >
       {/* Faixa de título: cor cheia da categoria, clareando para a direita */}
@@ -300,7 +304,7 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
             className="flex items-center gap-1.5 text-[18px] font-bold leading-none tabular-nums"
             style={{ color: VERDE_ALMA }}
           >
-            <SoulIcon className="h-4 w-auto" />
+            <SoulIcon className="h-5 w-auto" />
             {item.cost.toLocaleString(locale === "pt" ? "pt-BR" : "en-US")}
           </span>
         )}
