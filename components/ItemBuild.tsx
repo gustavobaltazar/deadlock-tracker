@@ -4,6 +4,7 @@ import {
   type MouseEvent as EventoReact,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -18,11 +19,19 @@ import type {
   RichText,
 } from "@/lib/api";
 
-/** Cores oficiais das categorias de item (de /v1/assets/colors). */
-const SLOT_COLOR: Record<string, string> = {
-  weapon: "#e58a00", // weapon_color_bright
-  vitality: "#00ff99", // armor_color
-  spirit: "#d8b8ff", // ap_currency_color
+type Categoria = { escuro: string; claro: string; faixa: string };
+
+/**
+ * Cores do cartão da loja, medidas nos cartões do jogo.
+ *
+ * Não são as da paleta de interface da API: `armor_color` (#00ff99) e
+ * `ap_currency_color` (#d8b8ff) são cores de destaque, muito mais saturadas
+ * que o verde-oliva e o magenta que a loja usa de fato.
+ */
+const PALETA: Record<string, Categoria> = {
+  weapon: { escuro: "#c17625", claro: "#cd8b24", faixa: "#7e6536" },
+  vitality: { escuro: "#648324", claro: "#759729", faixa: "#526033" },
+  spirit: { escuro: "#ae57a2", claro: "#c272ae", faixa: "#694163" },
 };
 
 /**
@@ -44,19 +53,29 @@ const STAT_COLOR: Record<string, string> = {
   tech_armor_down: "#d8b8ff",
 };
 
-/** Base escura sobre a qual a cor da categoria é diluída. */
-const BASE = "#241c16";
-/** Tom de texto do jogo (base_text) e o verde das almas. */
-const TEXTO = "#ffefd7";
+/** Creme da interface do jogo (base_text), usado em nomes e valores. */
+const CREME = "#ffefd7";
+/** Cinza dos rótulos e do corpo do texto — tudo que não é destaque. */
+const CINZA = "#cdcdcd";
+/** Branco das palavras que o jogo realça dentro da descrição. */
+const BRANCO = "#f8f8f8";
+/** Cinza mais apagado: "Passive", "Conditional". */
+const CINZA_ESCURO = "#a99f8e";
 const VERDE_ALMA = "#99ffd5";
 
 /**
- * O modal do jogo não usa cinza: cada faixa é a cor da categoria do item
- * diluída em diferentes intensidades sobre um fundo escuro. As proporções
- * abaixo foram medidas do modal original.
+ * Abaixo do título, todas as faixas são a mesma cor multiplicada para o preto.
+ * As proporções foram medidas nos cartões do jogo e valem igual para as três
+ * categorias — por isso uma cor por categoria basta.
  */
-const faixa = (cor: string, pct: number) =>
-  `color-mix(in srgb, ${cor} ${pct}%, ${BASE})`;
+const BONUS = 100;
+const CORPO = 92;
+const RODAPE = 65;
+const LINHA = 55;
+const CAIXA = 44;
+
+const banda = (cor: string, pct: number) =>
+  `color-mix(in srgb, ${cor} ${pct}%, #000000)`;
 
 /**
  * Build final do jogador, em grade de 6 colunas como a loja do jogo.
@@ -90,8 +109,12 @@ export default function ItemBuild({
   );
 }
 
-/** Largura do cartão, usada para centralizá-lo e mantê-lo dentro da janela. */
-const LARGURA = 320;
+/**
+ * Largura do cartão, usada para centralizá-lo e mantê-lo dentro da janela.
+ * O cartão do jogo tem ~470px; estes 400 mantêm a mesma proporção de texto
+ * sem ocupar meia tela numa lista de partidas.
+ */
+const LARGURA = 400;
 /** Folga entre o ícone e o cartão, e entre o cartão e a borda da janela. */
 const FOLGA = 8;
 
@@ -204,7 +227,7 @@ function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
       ) : (
         <span
           className={`flex ${size} items-center justify-center rounded-[3px] bg-surface-2 text-[10px] font-bold`}
-          style={{ color: SLOT_COLOR[item.slot] ?? "#aeaa94" }}
+          style={{ color: (PALETA[item.slot] ?? PALETA.weapon).claro }}
         >
           {item.name.charAt(0)}
         </span>
@@ -218,12 +241,28 @@ function ItemIcon({ item, compact }: { item: ItemView; compact: boolean }) {
 /**
  * Cartão do item no hover, reproduzindo o da loja do jogo: faixa de título na
  * cor da categoria, bônus permanentes, linha de passivo/ativo com o cooldown
- * em selo, descrição e os atributos em destaque.
+ * em selo, descrição, atributos em destaque e o caminho de melhoria.
  */
 function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
   const { locale, t } = useI18n();
-  const cor = SLOT_COLOR[item.slot] ?? "#aeaa94";
+  const cat = PALETA[item.slot] ?? PALETA.weapon;
   const temPreco = item.cost > 0 && item.cost !== 9999;
+  const cartao = useRef<HTMLSpanElement>(null);
+
+  /*
+   * A altura do cartão só se conhece depois de montado — varia de três linhas
+   * a um cartão com atributos e caminho de melhoria. Aqui ela é medida para
+   * prender o cartão dentro da janela; sem isso um cartão alto aberto para
+   * cima perde o título acima da borda. Escrito direto no estilo para não
+   * provocar um segundo render a cada hover.
+   */
+  useLayoutEffect(() => {
+    const el = cartao.current;
+    if (!el) return;
+    const alto = el.offsetHeight;
+    const topo = pos.acima ? pos.top - alto : pos.top;
+    el.style.top = `${Math.max(Math.min(topo, window.innerHeight - alto - FOLGA), FOLGA)}px`;
+  }, [pos]);
 
   const innate = item.sections
     .filter((s) => s.kind === "innate")
@@ -232,36 +271,36 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
 
   return (
     <span
-      className={
-        "grao pointer-events-none fixed z-50 flex flex-col overflow-hidden rounded-md text-left shadow-2xl " +
-        (pos.acima ? "-translate-y-full" : "")
-      }
+      ref={cartao}
+      className="grao pointer-events-none fixed z-50 flex flex-col overflow-hidden rounded-md text-left shadow-2xl"
       style={{
         left: pos.left,
         top: pos.top,
         width: LARGURA,
-        background: faixa(cor, 36),
+        background: banda(cat.faixa, CORPO),
       }}
     >
-      {/* Faixa de título, na cor cheia da categoria */}
+      {/* Faixa de título: cor cheia da categoria, clareando para a direita */}
       <span
-        className="flex flex-col gap-0.5 px-3.5 py-2.5"
-        style={{ background: `linear-gradient(135deg, ${cor}, ${faixa(cor, 86)})` }}
+        className="flex flex-col gap-1.5 px-4 py-3"
+        style={{
+          background: `linear-gradient(100deg, ${cat.escuro}, ${cat.claro})`,
+        }}
       >
         <span
-          className="text-[21px] font-bold leading-tight"
+          className="text-[26px] font-bold leading-none"
           // A sombra é o que dá peso ao nome no cartão do jogo: a Quicksand
           // para no peso 700 e sozinha ela fica leve sobre a faixa colorida.
-          style={{ color: TEXTO, textShadow: "0 2px 2px rgba(0,0,0,.35)" }}
+          style={{ color: CREME, textShadow: "0 2px 3px rgba(0,0,0,.4)" }}
         >
           {item.name}
         </span>
         {temPreco && (
           <span
-            className="flex items-center gap-1.5 text-[15px] font-bold tabular-nums"
+            className="flex items-center gap-1.5 text-[18px] font-bold leading-none tabular-nums"
             style={{ color: VERDE_ALMA }}
           >
-            <SoulIcon className="h-3.5 w-auto" />
+            <SoulIcon className="h-4 w-auto" />
             {item.cost.toLocaleString(locale === "pt" ? "pt-BR" : "en-US")}
           </span>
         )}
@@ -270,16 +309,11 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
       {/* Bônus permanentes */}
       {innate.length > 0 && (
         <span
-          className="flex flex-col gap-0.5 px-3.5 py-2"
-          style={{ background: faixa(cor, 40) }}
+          className="flex flex-col gap-1.5 px-4 py-3"
+          style={{ background: banda(cat.faixa, BONUS) }}
         >
           {innate.map((stat) => (
-            <span key={stat.label} className="flex items-baseline gap-2 text-[13px]">
-              <span className="font-bold" style={{ color: TEXTO }}>
-                {stat.value}
-              </span>
-              <span className="text-[#cdcdcd]">{stat.label}</span>
-            </span>
+            <Linha key={stat.label} stat={stat} />
           ))}
         </span>
       )}
@@ -288,7 +322,7 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
         <Efeito
           key={i}
           section={section}
-          cor={cor}
+          cat={cat}
           activation={item.activation}
           t={t}
         />
@@ -296,7 +330,10 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
 
       {/* Descrição solta, quando o item não tem seção de efeito */}
       {efeitos.length === 0 && item.description && (
-        <span className="px-3.5 py-2.5 text-[12px] leading-relaxed text-[#f8f8f8]">
+        <span
+          className="px-4 py-3 text-[15px] leading-relaxed"
+          style={{ color: CINZA }}
+        >
           <Rich text={item.description} />
         </span>
       )}
@@ -304,65 +341,92 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
       <Caminho
         rotulo={t.item.upgradesFrom}
         itens={item.upgradesFrom}
-        cor={cor}
+        cat={cat}
       />
-      <Caminho rotulo={t.item.upgradesTo} itens={item.upgradesTo} cor={cor} />
+      <Caminho rotulo={t.item.upgradesTo} itens={item.upgradesTo} cat={cat} />
+    </span>
+  );
+}
+
+/**
+ * Linha de atributo fora das caixas. O valor vai em creme e negrito, o rótulo
+ * em cinza e peso normal: é esse contraste — não o tamanho — que o jogo usa
+ * para separar o número do que ele significa.
+ */
+function Linha({ stat }: { stat: ItemStat }) {
+  return (
+    <span className="flex items-baseline gap-2 text-[16px] leading-tight">
+      <span className="font-bold tabular-nums" style={{ color: CREME }}>
+        {stat.value}
+      </span>
+      <span style={{ color: CINZA }}>{stat.label}</span>
     </span>
   );
 }
 
 /**
  * Um lado do caminho de melhoria: de quais itens este vem, ou em quais ele
- * vira. A maioria dos itens não tem nenhum dos dois e a faixa simplesmente
- * não aparece.
+ * vira. Em duas colunas como no jogo. A maioria dos itens não tem nenhum dos
+ * dois lados e a faixa simplesmente não aparece.
  */
 function Caminho({
   rotulo,
   itens,
-  cor,
+  cat,
 }: {
   rotulo: string;
   itens: ItemRef[];
-  cor: string;
+  cat: Categoria;
 }) {
   if (itens.length === 0) return null;
 
+  // Rótulo e nomes são apagados sobre a faixa, não brancos: no cartão do jogo
+  // esta parte é referência, não a informação principal.
+  const fundo = banda(cat.faixa, RODAPE);
   return (
     <span
-      className="flex flex-col gap-1.5 px-3.5 py-2"
-      style={{ background: faixa(cor, 22) }}
+      className="flex flex-col gap-2 px-4 py-3"
+      style={{ background: fundo }}
     >
-      <span className="text-[10px] font-bold uppercase tracking-wide text-[#cdcdcd]">
-        {rotulo}
+      <span
+        className="text-[11px] font-bold uppercase leading-none tracking-wider"
+        style={{ color: `color-mix(in srgb, #ffffff 26%, ${fundo})` }}
+      >
+        {rotulo}:
       </span>
-      {itens.map((ref) => (
-        <span key={ref.id} className="flex items-center gap-2">
-          {ref.image && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={ref.image}
-              alt=""
-              loading="lazy"
-              className="size-5 shrink-0 rounded-[3px] object-contain"
-            />
-          )}
-          <span className="text-[12px] font-semibold" style={{ color: TEXTO }}>
-            {ref.name}
+      <span className="grid grid-cols-2 gap-x-3 gap-y-2">
+        {itens.map((alvo) => (
+          <span key={alvo.id} className="flex items-center gap-2">
+            {alvo.image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={alvo.image}
+                alt=""
+                loading="lazy"
+                className="size-6 shrink-0 rounded-[3px] object-contain"
+              />
+            )}
+            <span
+              className="text-[14px] font-bold leading-tight"
+              style={{ color: `color-mix(in srgb, ${CREME} 58%, ${fundo})` }}
+            >
+              {alvo.name}
+            </span>
           </span>
-        </span>
-      ))}
+        ))}
+      </span>
     </span>
   );
 }
 
 function Efeito({
   section,
-  cor,
+  cat,
   activation,
   t,
 }: {
   section: ItemSection;
-  cor: string;
+  cat: Categoria;
   activation: string | null;
   t: { item: { passive: string; active: string } };
 }) {
@@ -374,58 +438,67 @@ function Efeito({
   return (
     <>
       <span
-        className="flex items-center justify-between gap-2 px-3.5 py-1.5"
-        style={{ background: faixa(cor, 18) }}
+        className="flex items-center justify-between gap-2 px-4 py-2"
+        style={{ background: banda(cat.faixa, LINHA) }}
       >
-        <span className="text-[13px] italic text-[#cdcdcd]">
+        <span className="text-[15px] italic" style={{ color: CINZA_ESCURO }}>
           {ehPassivo ? t.item.passive : t.item.active}
         </span>
         {cooldown && (
           <span
-            className="flex items-center gap-1 rounded px-2 py-0.5 text-[12px] font-bold tabular-nums"
-            style={{ background: faixa(cor, 10), color: TEXTO }}
+            className="flex items-center gap-1 rounded px-2 py-0.5 text-[14px] font-bold tabular-nums"
+            style={{ background: banda(cat.faixa, CAIXA), color: CREME }}
           >
             {cooldown.icon && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={cooldown.icon} alt="" className="size-3 opacity-90" />
+              <img src={cooldown.icon} alt="" className="size-3.5 opacity-90" />
             )}
             {cooldown.value}
           </span>
         )}
       </span>
 
-      <span className="flex flex-col gap-2.5 px-3.5 py-2.5">
+      <span className="flex flex-col gap-3 px-4 py-3">
         {section.text && (
-          <span className="text-[12px] leading-relaxed text-[#f8f8f8]">
+          <span className="text-[15px] leading-relaxed" style={{ color: CINZA }}>
             <Rich text={section.text} />
           </span>
         )}
 
         {section.important.length > 0 && (
-          <span className="grid grid-cols-3 gap-1.5">
+          // As caixas dividem a largura em partes iguais, como no cartão do
+          // jogo — uma caixa sozinha ocupando um terço ficaria desamparada.
+          <span className="flex gap-2">
             {section.important.map((stat) => (
               <span
                 key={stat.label}
-                className="flex flex-col items-center gap-0.5 rounded px-1 py-1.5 text-center"
-                style={{ background: faixa(cor, 12) }}
+                className="flex flex-1 flex-col items-center gap-1 rounded px-1.5 py-2 text-center"
+                style={{ background: banda(cat.faixa, CAIXA) }}
               >
                 <span className="flex items-center gap-1">
                   {stat.icon && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={stat.icon} alt="" className="size-3.5" />
+                    <img src={stat.icon} alt="" className="size-4" />
                   )}
-                  <span className="text-[15px] font-extrabold tabular-nums text-white">
+                  <span className="text-[20px] font-bold leading-none tabular-nums text-white">
                     {stat.value}
                   </span>
                 </span>
                 <span
-                  className="text-[11px] font-semibold leading-tight"
-                  style={{ color: stat.cssClass ? STAT_COLOR[stat.cssClass] ?? TEXTO : TEXTO }}
+                  className="text-[13px] font-semibold leading-tight"
+                  style={{
+                    color: stat.cssClass
+                      ? (STAT_COLOR[stat.cssClass] ?? CREME)
+                      : CREME,
+                  }}
                 >
                   {stat.label}
                 </span>
                 {stat.conditional && (
-                  <span className="text-[10px] italic leading-none text-[#a99f8e]">
+                  <span
+                    className="text-[12px] italic leading-none"
+                    style={{ color: CINZA_ESCURO }}
+                  >
                     Conditional
                   </span>
                 )}
@@ -437,16 +510,11 @@ function Efeito({
 
       {rodape.length > 0 && (
         <span
-          className="flex flex-col gap-0.5 px-3.5 py-2"
-          style={{ background: faixa(cor, 22) }}
+          className="flex flex-col gap-1.5 px-4 py-3"
+          style={{ background: banda(cat.faixa, RODAPE) }}
         >
           {rodape.map((stat) => (
-            <span key={stat.label} className="flex items-baseline gap-2 text-[13px]">
-              <span className="font-bold" style={{ color: TEXTO }}>
-                {stat.value}
-              </span>
-              <span className="text-[#cdcdcd]">{stat.label}</span>
-            </span>
+            <Linha key={stat.label} stat={stat} />
           ))}
         </span>
       )}
@@ -454,13 +522,17 @@ function Efeito({
   );
 }
 
-/** Renderiza o texto do jogo preservando os termos que ele realça. */
+/**
+ * Texto do jogo com os termos que ele realça. O destaque é o que carrega a
+ * leitura do cartão: o corpo fica em cinza e só as palavras-chave vão a branco
+ * e negrito — sem esse contraste a descrição vira um bloco uniforme.
+ */
 function Rich({ text }: { text: RichText }) {
   return (
     <>
       {text.map((parte, i) =>
         parte.highlight ? (
-          <span key={i} className="font-bold text-white">
+          <span key={i} className="font-bold" style={{ color: BRANCO }}>
             {parte.text}
           </span>
         ) : (

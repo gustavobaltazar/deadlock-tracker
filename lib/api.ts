@@ -397,7 +397,7 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
       cost: Number(i.cost) || 0,
       description: descricao,
       activation: i.activation ?? null,
-      sections: buildSections(i.tooltip_sections, i.properties, descricao),
+      sections: buildSections(i.tooltip_sections, i.properties),
       upgradesFrom: [],
       upgradesTo: [],
     });
@@ -435,7 +435,6 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
   function buildSections(
     sections: RawSection[] | null | undefined,
     properties: Record<string, RawProperty> | null | undefined,
-    descricao: RichText | null,
   ): ItemSection[] {
     if (!sections || !properties) return [];
 
@@ -444,7 +443,13 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
         .map((parte) => parte.text)
         .join("")
         .trim();
-    const textoDescricao = textoDe(descricao);
+    /*
+     * A descrição do item costuma reaparecer palavra por palavra numa seção, e
+     * às vezes em mais de uma. A repetição que o cartão precisa evitar é entre
+     * seções: a descrição solta só é exibida quando não há seção nenhuma, então
+     * compará-la com elas apagaria o texto em vez de desduplicá-lo.
+     */
+    const jaVistos = new Set<string>();
 
     const resolve = (chaves: string[] | null | undefined): ItemStat[] =>
       (chaves ?? [])
@@ -485,11 +490,12 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
       .flatMap((section) =>
         (section.section_attributes ?? []).map((attr) => {
           const texto = parseRichText(attr.loc_string);
+          const bruto = textoDe(texto);
+          const repetido = bruto !== "" && jaVistos.has(bruto);
+          if (bruto) jaVistos.add(bruto);
           return {
             kind: section.section_type ?? "innate",
-            // Várias seções repetem palavra por palavra a descrição do item;
-            // mostrar as duas duplicaria o texto no cartão.
-            text: textoDe(texto) === textoDescricao ? null : texto,
+            text: repetido ? null : texto,
             important: [
               ...resolve(attr.important_properties),
               ...resolve(attr.elevated_properties),
