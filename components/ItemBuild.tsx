@@ -73,6 +73,8 @@ const CORPO = 92;
 const RODAPE = 65;
 const LINHA = 55;
 const CAIXA = 44;
+/** O caminho de melhoria fica mais apagado que o rodapé: é referência. */
+const CAMINHO = 54;
 
 const banda = (cor: string, pct: number) =>
   `color-mix(in srgb, ${cor} ${pct}%, #000000)`;
@@ -386,7 +388,7 @@ function Caminho({
 
   // Rótulo e nomes são apagados sobre a faixa, não brancos: no cartão do jogo
   // esta parte é referência, não a informação principal.
-  const fundo = banda(cat.faixa, RODAPE);
+  const fundo = banda(cat.faixa, CAMINHO);
   return (
     <span
       className="flex flex-col gap-2 px-4 py-3"
@@ -534,15 +536,23 @@ function Efeito({
 function Rich({ text }: { text: RichText }) {
   return (
     <>
-      {text.map((parte, i) =>
-        parte.highlight ? (
-          <span key={i} className="font-bold" style={{ color: BRANCO }}>
-            {parte.text}
-          </span>
-        ) : (
-          <span key={i}>{parte.text}</span>
-        ),
-      )}
+      {text.map((parte, i) => {
+        if (parte.highlight) {
+          return (
+            <span key={i} className="font-bold" style={{ color: BRANCO }}>
+              {parte.text}
+            </span>
+          );
+        }
+        if (parte.dim) {
+          return (
+            <span key={i} style={{ color: CINZA_ESCURO }}>
+              {parte.text}
+            </span>
+          );
+        }
+        return <span key={i}>{parte.text}</span>;
+      })}
     </>
   );
 }

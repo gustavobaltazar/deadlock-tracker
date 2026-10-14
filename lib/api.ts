@@ -88,8 +88,11 @@ export type MatchView = MatchHistoryEntry & {
   items: ItemView[];
 };
 
-/** Trecho de texto do jogo: `highlight` marca os termos que ele realça. */
-export type RichText = { text: string; highlight: boolean }[];
+/**
+ * Trecho de texto do jogo: `highlight` marca os termos que ele realça e `dim`
+ * os que ele apaga (ressalvas, condições).
+ */
+export type RichText = { text: string; highlight: boolean; dim?: boolean }[];
 
 export type ItemStat = {
   label: string;
@@ -144,36 +147,66 @@ export type ItemRef = {
   image: string | null;
 };
 
+/** Classes com que o jogo realça um termo dentro do texto. */
+const REALCE = /\b(highlight|inline-attribute-label)\b/;
+/** Classe com que ele apaga um trecho — ressalvas e condições. */
+const APAGADO = /\bdiminish\b/;
+
 /**
  * Converte o texto do jogo em segmentos marcados.
  *
- * As descrições vêm com HTML (`<span class="highlight">`, `<br>`). Em vez de
- * injetar esse markup na página, quebramos em segmentos e deixamos o React
- * renderizar — nada vindo da API é interpretado como HTML.
+ * As descrições vêm com HTML (`<span class="highlight">`, `<br>`, ícones em
+ * `<svg>`). Em vez de injetar esse markup na página, quebramos em segmentos e
+ * deixamos o React renderizar — nada vindo da API é interpretado como HTML.
+ *
+ * O percurso é feito com uma pilha de classes abertas, e não casando pares de
+ * `<span>`: o jogo aninha realces (um `inline-attribute-label` dentro de um
+ * `highlight`, por exemplo) e um casamento ingênuo fecharia a tag errada.
  */
 function parseRichText(raw: string | null | undefined): RichText | null {
   if (!raw) return null;
 
-  const normalizado = raw.replace(/<br\s*\/?>/gi, " ");
+  const normalizado = raw
+    .replace(/<br\s*\/?>/gi, " ")
+    // Ícones embutidos no meio da frase: o nome do atributo vem logo depois,
+    // em texto, então remover a arte não deixa buraco de sentido.
+    .replace(/<svg[\s\S]*?<\/svg>/gi, "")
+    .replace(/<img[^>]*>/gi, "");
+
   const partes: RichText = [];
-  const regex = /<span[^>]*class="[^"]*highlight[^"]*"[^>]*>(.*?)<\/span>/gi;
+  const abertas: string[] = [];
 
-  let ultimo = 0;
-  let m: RegExpExecArray | null;
-  while ((m = regex.exec(normalizado))) {
-    if (m.index > ultimo) {
-      partes.push({ text: normalizado.slice(ultimo, m.index), highlight: false });
+  const adiciona = (bruto: string) => {
+    const text = bruto.replace(/\s+/g, " ");
+    if (!text) return;
+    const classes = abertas.join(" ");
+    const highlight = REALCE.test(classes);
+    const dim = APAGADO.test(classes);
+    // Junta com o anterior quando a marcação é a mesma, para não transformar
+    // uma frase em dezenas de segmentos.
+    const ultimo = partes.at(-1);
+    if (ultimo && ultimo.highlight === highlight && !!ultimo.dim === dim) {
+      ultimo.text += text;
+      return;
     }
-    partes.push({ text: m[1], highlight: true });
-    ultimo = m.index + m[0].length;
-  }
-  if (ultimo < normalizado.length) {
-    partes.push({ text: normalizado.slice(ultimo), highlight: false });
-  }
+    partes.push(dim ? { text, highlight, dim } : { text, highlight });
+  };
 
-  return partes
-    .map((parte) => ({ ...parte, text: parte.text.replace(/<[^>]+>/g, "") }))
-    .filter((parte) => parte.text.length > 0);
+  const tags = /<span([^>]*)>|<\/span\s*>|<[^>]+>/gi;
+  let ultimoCorte = 0;
+  let m: RegExpExecArray | null;
+  while ((m = tags.exec(normalizado))) {
+    adiciona(normalizado.slice(ultimoCorte, m.index));
+    if (m[1] !== undefined) {
+      abertas.push(/class="([^"]*)"/.exec(m[1])?.[1] ?? "");
+    } else if (m[0].startsWith("</span")) {
+      abertas.pop();
+    }
+    ultimoCorte = tags.lastIndex;
+  }
+  adiciona(normalizado.slice(ultimoCorte));
+
+  return partes.length > 0 ? partes : null;
 }
 
 export function toMatchViews(
