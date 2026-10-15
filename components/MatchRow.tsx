@@ -19,25 +19,31 @@ export default function MatchRow({
 }) {
   const { locale, t } = useI18n();
   const win = isWin(match);
+  // Partida ainda sem metadata na API: não há placar para abrir.
+  const expansivel = match.hasDetails;
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      aria-expanded={expanded}
-      onClick={onToggle}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onToggle();
-        }
-      }}
+      {...(expansivel && {
+        role: "button",
+        tabIndex: 0,
+        "aria-expanded": expanded,
+        onClick: onToggle,
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle();
+          }
+        },
+      })}
       className={
-        "flex cursor-pointer items-center gap-2.5 border-l-4 px-2.5 py-2.5 transition-colors " +
+        "flex items-center gap-2.5 border-l-4 px-2.5 py-2.5 transition-colors " +
         (expanded ? "rounded-t-md " : "rounded-md ") +
-        (win
-          ? "border-l-win bg-win-bg/40 hover:bg-win-bg/70"
-          : "border-l-loss bg-loss-bg/40 hover:bg-loss-bg/70")
+        (win ? "border-l-win bg-win-bg/40 " : "border-l-loss bg-loss-bg/40 ") +
+        (expansivel
+          ? "cursor-pointer " +
+            (win ? "hover:bg-win-bg/70" : "hover:bg-loss-bg/70")
+          : "")
       }
     >
       <div className="w-20 shrink-0">
@@ -111,7 +117,9 @@ export default function MatchRow({
         viewBox="0 0 24 24"
         className={
           "size-4 shrink-0 text-muted transition-transform " +
-          (expanded ? "rotate-180" : "")
+          (expanded ? "rotate-180 " : "") +
+          // Escondida, não removida: mantém as colunas alinhadas às demais linhas.
+          (expansivel ? "" : "invisible")
         }
         fill="none"
         stroke="currentColor"

@@ -86,6 +86,12 @@ export type MatchView = MatchHistoryEntry & {
   heroIcon: string | null;
   /** Build final do jogador na partida, em ordem de compra. */
   items: ItemView[];
+  /**
+   * Se a partida já tem metadata na API. O histórico registra a partida antes
+   * da coleta dos detalhes, então as mais recentes podem ainda não ter placar
+   * nem builds — nesse caso a linha não abre.
+   */
+  hasDetails: boolean;
 };
 
 /**
@@ -212,7 +218,7 @@ function parseRichText(raw: string | null | undefined): RichText | null {
 export function toMatchViews(
   matches: MatchHistoryEntry[],
   heroes: Map<number, Hero>,
-  itemsByMatch?: Map<number, ItemView[]>,
+  itemsByMatch?: Map<number, ItemView[]> | null,
 ): MatchView[] {
   return matches.map((m) => {
     const hero = heroes.get(m.hero_id);
@@ -221,6 +227,8 @@ export function toMatchViews(
       heroName: hero?.name ?? `Herói ${m.hero_id}`,
       heroIcon: hero?.icon ?? null,
       items: itemsByMatch?.get(m.match_id) ?? [],
+      // Sem o mapa (a busca em lote falhou) não dá para saber: deixa abrir.
+      hasDetails: itemsByMatch ? itemsByMatch.has(m.match_id) : true,
     };
   });
 }
@@ -551,12 +559,16 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
  * (os 12 jogadores, com séries temporais completas). O endpoint em lote aceita
  * projeção: `only_filtered_players` corta para o jogador pedido e
  * `include_player_items` traz só a build — 20 partidas saem em ~100 KB.
+ *
+ * Toda partida que a API devolve entra no mapa, mesmo sem itens: a ausência
+ * no mapa é o que indica que ela ainda não tem metadata. Devolve `null` se a
+ * chamada falhar, para não confundir erro com partida inexistente.
  */
 export async function getMatchItems(
   accountId: number,
   matchIds: number[],
   items: Map<number, ItemView>,
-): Promise<Map<number, ItemView[]>> {
+): Promise<Map<number, ItemView[]> | null> {
   const result = new Map<number, ItemView[]>();
   if (matchIds.length === 0) return result;
 
@@ -581,15 +593,13 @@ export async function getMatchItems(
     rows = await get<BulkMatch[]>("/v1/matches/metadata?" + query.toString(), 600);
   } catch {
     // A build é informação acessória: se falhar, a partida ainda aparece.
-    return result;
+    return null;
   }
 
   for (const row of rows) {
     const player = row.players?.find((p) => p.account_id === accountId);
-    if (!player?.items) continue;
-
     const seen = new Set<number>();
-    const build = player.items
+    const build = (player?.items ?? [])
       // sold_time_s > 0 = item revendido; mostramos a build com que terminou.
       .filter((entry) => !entry.sold_time_s)
       .sort((a, b) => a.game_time_s - b.game_time_s)
