@@ -65,6 +65,9 @@ const en = {
     activityDays: "Played on {n} days",
     activityLess: "Less",
     activityMore: "More",
+    mates: "Most played with",
+    mateLine: "{matches} games together",
+    noMates: "No frequent teammates.",
   },
   freshness: {
     lastMatch: "Most recent match on record: {ago} ago.",
@@ -206,6 +209,9 @@ const pt: Dictionary = {
     activityDays: "Jogou em {n} dias",
     activityLess: "Menos",
     activityMore: "Mais",
+    mates: "Mais jogou com",
+    mateLine: "{matches} jogos juntos",
+    noMates: "Sem parceiros frequentes.",
   },
   freshness: {
     lastMatch: "Partida mais recente registrada: {ago} atrás.",

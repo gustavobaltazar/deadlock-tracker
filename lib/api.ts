@@ -319,6 +319,75 @@ export async function getProfile(accountId: number): Promise<SteamProfile | null
   return rows[0] ? stripProfile(rows[0]) : null;
 }
 
+/** Vários perfis numa chamada só; a ordem da resposta não é garantida. */
+export async function getProfiles(
+  accountIds: number[],
+): Promise<Map<number, SteamProfile>> {
+  const map = new Map<number, SteamProfile>();
+  if (accountIds.length === 0) return map;
+  try {
+    const rows = await get<SteamProfile[]>(
+      `/v1/players/steam?account_ids=${accountIds.join(",")}`,
+      300,
+    );
+    for (const p of rows) map.set(p.account_id, stripProfile(p));
+  } catch {
+    // Sem perfil a lista cai no "Jogador {id}"; não é motivo para quebrar.
+  }
+  return map;
+}
+
+export type FrequentMate = {
+  accountId: number;
+  name: string | null;
+  avatar: string | null;
+  matches: number;
+  wins: number;
+};
+
+/**
+ * Jogadores que mais estiveram no mesmo time que o jogador.
+ *
+ * `same_party=false` conta qualquer partida no mesmo time, e não só as em
+ * party: amigos que entram na fila separados também aparecem. O corte de 5
+ * partidas tira os milhares de aliados aleatórios de uma partida só (a
+ * resposta cai de ~210 KB para ~30 KB) — e ninguém com menos que isso é
+ * "parceiro frequente". A resposta traz a lista de partidas de cada um, que
+ * descartamos.
+ */
+export async function getFrequentMates(
+  accountId: number,
+  limit = 5,
+): Promise<FrequentMate[]> {
+  type RawMate = { mate_id: number; wins: number; matches_played: number };
+  let rows: RawMate[];
+  try {
+    rows = await get<RawMate[]>(
+      `/v1/players/${accountId}/mate-stats?min_matches_played=5`,
+      600,
+    );
+  } catch {
+    return [];
+  }
+
+  const top = rows
+    .filter((m) => m.mate_id !== accountId)
+    .sort((a, b) => b.matches_played - a.matches_played || b.wins - a.wins)
+    .slice(0, limit);
+  const profiles = await getProfiles(top.map((m) => m.mate_id));
+
+  return top.map((m) => {
+    const profile = profiles.get(m.mate_id);
+    return {
+      accountId: m.mate_id,
+      name: profile?.personaname ?? null,
+      avatar: profile?.avatarmedium ?? profile?.avatar ?? null,
+      matches: m.matches_played,
+      wins: m.wins,
+    };
+  });
+}
+
 function stripProfile(p: SteamProfile & { friends?: unknown }): SteamProfile {
   const { friends: _friends, ...rest } = p;
   return rest;

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import ActivityHeatmap, { type ActivityGame } from "@/components/ActivityHeatmap";
 import HeroStatsList from "@/components/HeroStatsList";
 import DataFreshness from "@/components/DataFreshness";
+import FrequentMates from "@/components/FrequentMates";
 import MatchList from "@/components/MatchList";
 import PlayerHeader from "@/components/PlayerHeader";
 import RankCard from "@/components/RankCard";
@@ -10,6 +11,7 @@ import {
   getHeroMap,
   getHeroStats,
   getItemMap,
+  getFrequentMates,
   getMatchItems,
   getRankAssets,
   getMatchHistory,
@@ -63,16 +65,25 @@ export default async function PlayerPage({
   const id = Number(accountId);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const [profile, matches, rank, heroStats, heroes, itemCatalog, rankAssets] =
-    await Promise.all([
-      getProfile(id),
-      getMatchHistory(id),
-      getRank(id),
-      getHeroStats(id),
-      getHeroMap(),
-      getItemMap(),
-      getRankAssets(),
-    ]);
+  const [
+    profile,
+    matches,
+    rank,
+    heroStats,
+    heroes,
+    itemCatalog,
+    rankAssets,
+    mates,
+  ] = await Promise.all([
+    getProfile(id),
+    getMatchHistory(id),
+    getRank(id),
+    getHeroStats(id),
+    getHeroMap(),
+    getItemMap(),
+    getRankAssets(),
+    getFrequentMates(id),
+  ]);
 
   if (!profile && matches.length === 0) notFound();
 
@@ -181,6 +192,13 @@ export default async function PlayerPage({
               </span>
             </h2>
             <ActivityHeatmap games={activity} weeks={ACTIVITY_WEEKS} />
+          </section>
+
+          <section className="rounded-lg border border-border bg-surface">
+            <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
+              {t.player.mates}
+            </h2>
+            <FrequentMates mates={mates} locale={locale} t={t} />
           </section>
         </div>
 
