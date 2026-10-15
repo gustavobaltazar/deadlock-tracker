@@ -8,7 +8,7 @@ import { detectLocale, isLocale } from "@/lib/i18n";
  * a versão correspondente: a escolha salva em cookie tem prioridade e, na
  * primeira visita, vale o idioma do navegador.
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const firstSegment = pathname.split("/")[1];
 

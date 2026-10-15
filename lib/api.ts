@@ -251,18 +251,50 @@ export function isWin(m: MatchHistoryEntry): boolean {
  */
 const API_KEY = process.env.DEADLOCK_API_KEY;
 
-async function get<T>(path: string, revalidate: number): Promise<T> {
+/**
+ * `revalidate` em segundos usa o data cache do Next; `"no-store"` pula esse
+ * cache, para respostas grandes demais que são cacheadas com `memoize`.
+ */
+async function get<T>(
+  path: string,
+  revalidate: number | "no-store",
+): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     headers: {
       Accept: "application/json",
       ...(API_KEY ? { "X-API-KEY": API_KEY } : {}),
     },
-    next: { revalidate },
+    ...(revalidate === "no-store"
+      ? { cache: "no-store" as const }
+      : { next: { revalidate } }),
   });
   if (!res.ok) {
     throw new ApiError(`Deadlock API ${res.status} em ${path}`, res.status);
   }
   return res.json() as Promise<T>;
+}
+
+/**
+ * Cache em memória para os catálogos grandes.
+ *
+ * O data cache do Next recusa respostas acima de 2 MB, e /v1/assets/heroes
+ * (~2,5 MB) e /v1/assets/items (~8 MB) passam disso — com `revalidate` eles
+ * eram baixados de novo a cada requisição. Aqui guardamos o resultado já
+ * processado, bem menor, na memória do processo. Quem chega enquanto a busca
+ * está em andamento reaproveita a mesma promessa; se ela falhar, sai do cache.
+ */
+function memoize<T>(ttlSeconds: number, load: () => Promise<T>): () => Promise<T> {
+  let cached: { value: Promise<T>; expires: number } | null = null;
+  return () => {
+    if (cached && cached.expires > Date.now()) return cached.value;
+    const value = load();
+    const entry = { value, expires: Date.now() + ttlSeconds * 1000 };
+    cached = entry;
+    value.catch(() => {
+      if (cached === entry) cached = null;
+    });
+    return value;
+  };
 }
 
 export class ApiError extends Error {
@@ -320,15 +352,15 @@ export async function getHeroStats(accountId: number): Promise<PlayerHeroStats[]
   }
 }
 
-/** /v1/assets/heroes responde ~1.8MB; reduzimos para o mínimo e cacheamos por 24h. */
-export async function getHeroMap(): Promise<Map<number, Hero>> {
+/** /v1/assets/heroes responde ~2,5 MB; reduzimos para o mínimo e cacheamos por 24h. */
+export const getHeroMap = memoize(86400, async (): Promise<Map<number, Hero>> => {
   type RawHero = {
     id: number;
     name: string;
     images?: Record<string, string | null>;
     colors?: { style_hex?: string | null };
   };
-  const raw = await get<RawHero[]>("/v1/assets/heroes", 86400);
+  const raw = await get<RawHero[]>("/v1/assets/heroes", "no-store");
   const map = new Map<number, Hero>();
   for (const h of raw) {
     map.set(h.id, {
@@ -347,7 +379,7 @@ export async function getHeroMap(): Promise<Map<number, Hero>> {
     });
   }
   return map;
-}
+});
 
 export const RANK_TIERS = [
   "Obscurus", "Initiate", "Seeker", "Acolyte", "Sentinel", "Mystic",
@@ -377,11 +409,11 @@ export function pickSignatureHero(
 }
 
 /**
- * Catálogo de itens de loja. /v1/assets/items responde ~6 MB e mistura
+ * Catálogo de itens de loja. /v1/assets/items responde ~8 MB e mistura
  * habilidades de herói (`type: "ability"`) com itens compráveis
- * (`type: "upgrade"`); só os compráveis interessam aqui.
+ * (`type: "upgrade"`); só os compráveis interessam aqui. Cacheado por 24h.
  */
-export async function getItemMap(): Promise<Map<number, ItemView>> {
+export const getItemMap = memoize(86400, async (): Promise<Map<number, ItemView>> => {
   type RawItem = {
     id: number;
     name: string;
@@ -419,7 +451,7 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
     }[];
   };
 
-  const raw = await get<RawItem[]>("/v1/assets/items", 86400);
+  const raw = await get<RawItem[]>("/v1/assets/items", "no-store");
   const map = new Map<number, ItemView>();
   // `class_name` é a chave com que o jogo liga um item aos seus componentes.
   const porClasse = new Map<string, number>();
@@ -550,7 +582,7 @@ export async function getItemMap(): Promise<Map<number, ItemView>> {
           section.text || section.important.length > 0 || section.details.length > 0,
       );
   }
-}
+});
 
 /**
  * Builds do jogador para várias partidas numa única chamada.

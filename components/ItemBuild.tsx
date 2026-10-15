@@ -340,8 +340,8 @@ function ItemCard({ item, pos }: { item: ItemView; pos: Posicao }) {
           className="flex flex-col gap-1.5 px-4 py-3"
           style={{ background: banda(cat.faixa, BONUS) }}
         >
-          {innate.map((stat) => (
-            <Linha key={stat.label} stat={stat} />
+          {innate.map((stat, i) => (
+            <Linha key={`${i}-${stat.label}`} stat={stat} />
           ))}
         </span>
       )}
@@ -497,9 +497,9 @@ function Efeito({
           // As caixas dividem a largura em partes iguais, como no cartão do
           // jogo — uma caixa sozinha ocupando um terço ficaria desamparada.
           <span className="flex gap-2">
-            {section.important.map((stat) => (
+            {section.important.map((stat, i) => (
               <span
-                key={stat.label}
+                key={`${i}-${stat.label}`}
                 className="flex flex-1 flex-col items-center gap-1 rounded px-1.5 py-2 text-center"
                 style={{ background: banda(cat.faixa, CAIXA) }}
               >
@@ -541,8 +541,8 @@ function Efeito({
           className="flex flex-col gap-1.5 px-4 py-3"
           style={{ background: banda(cat.faixa, RODAPE) }}
         >
-          {rodape.map((stat) => (
-            <Linha key={stat.label} stat={stat} />
+          {rodape.map((stat, i) => (
+            <Linha key={`${i}-${stat.label}`} stat={stat} />
           ))}
         </span>
       )}
