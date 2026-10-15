@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import Link from "next/link";
@@ -116,6 +117,9 @@ export default async function LocaleLayout({
             . {dictionary.site.footer.disclaimer}
           </footer>
         </I18nProvider>
+        {/* Vercel Web Analytics: só envia dados em produção na Vercel; em
+            desenvolvimento o componente não faz nada. */}
+        <Analytics />
       </body>
     </html>
   );
