@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
-import { searchPlayers } from "@/lib/api";
+import { errorCode, searchPlayers } from "@/lib/api";
+import { cdnCache, NO_STORE } from "@/lib/http";
 import { parseSteamInput, resolveVanity } from "@/lib/steam";
+
+/**
+ * Nome Steam tem no máximo 32 caracteres e um link de perfil cabe com folga
+ * em 100. Acima disso não é busca legítima — e o texto iria inteiro para a
+ * URL da chamada à API.
+ */
+const MAX_QUERY = 100;
 
 type Hit = {
   account_id: number;
@@ -19,9 +27,11 @@ type Hit = {
  */
 export async function GET(request: Request) {
   const query = new URL(request.url).searchParams.get("q")?.trim() ?? "";
-  if (query.length < 2) {
-    return NextResponse.json({ results: [] });
+  if (query.length < 2 || query.length > MAX_QUERY) {
+    return NextResponse.json({ results: [] }, { headers: NO_STORE });
   }
+  // Resultado de busca muda pouco: a mesma consulta é servida pela CDN.
+  const headers = cdnCache(300);
 
   try {
     const parsed = parseSteamInput(query);
@@ -29,7 +39,7 @@ export async function GET(request: Request) {
     // Texto livre: busca normal por nome.
     if (parsed.kind === "text") {
       const profiles = await searchPlayers(parsed.text, 25);
-      return NextResponse.json({ results: profiles.map(toHit) });
+      return NextResponse.json({ results: profiles.map(toHit) }, { headers });
     }
 
     const accountId =
@@ -38,23 +48,26 @@ export async function GET(request: Request) {
         : await resolveVanity(parsed.vanity);
 
     if (accountId == null) {
-      return NextResponse.json({
-        results: [],
-        error: "Não foi possível resolver essa URL da Steam.",
-      });
+      return NextResponse.json(
+        { results: [], error: "unresolved_url" },
+        { headers },
+      );
     }
 
     // Jogador identificado: devolvemos só ele, marcado como exato, para o
     // cliente poder navegar direto no Enter.
     const profiles = await searchPlayers(String(accountId), 1);
     const hit = profiles.find((p) => p.account_id === accountId);
-    return NextResponse.json({
-      exact: accountId,
-      results: hit ? [toHit(hit)] : [],
-    });
+    return NextResponse.json(
+      { exact: accountId, results: hit ? [toHit(hit)] : [] },
+      { headers },
+    );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
-    return NextResponse.json({ results: [], error: message }, { status: 502 });
+    console.error("[api/search]", error);
+    return NextResponse.json(
+      { results: [], error: errorCode(error) },
+      { status: 502, headers: NO_STORE },
+    );
   }
 }
 

@@ -252,6 +252,15 @@ export function isWin(m: MatchHistoryEntry): boolean {
 const API_KEY = process.env.DEADLOCK_API_KEY;
 
 /**
+ * Tempo máximo de espera pela Deadlock API. Sem ele, uma API lenta prende as
+ * funções do servidor até o timeout da plataforma — e sob tráfego alto isso
+ * esgota a concorrência e derruba o site inteiro, não só a página lenta. Os
+ * catálogos (até ~8 MB) ganham mais folga.
+ */
+const TIMEOUT_MS = 10_000;
+const TIMEOUT_CATALOG_MS = 25_000;
+
+/**
  * `revalidate` em segundos usa o data cache do Next; `"no-store"` pula esse
  * cache, para respostas grandes demais que são cacheadas com `memoize`.
  */
@@ -259,15 +268,27 @@ async function get<T>(
   path: string,
   revalidate: number | "no-store",
 ): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
-    headers: {
-      Accept: "application/json",
-      ...(API_KEY ? { "X-API-KEY": API_KEY } : {}),
-    },
-    ...(revalidate === "no-store"
-      ? { cache: "no-store" as const }
-      : { next: { revalidate } }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API}${path}`, {
+      headers: {
+        Accept: "application/json",
+        ...(API_KEY ? { "X-API-KEY": API_KEY } : {}),
+      },
+      signal: AbortSignal.timeout(
+        revalidate === "no-store" ? TIMEOUT_CATALOG_MS : TIMEOUT_MS,
+      ),
+      ...(revalidate === "no-store"
+        ? { cache: "no-store" as const }
+        : { next: { revalidate } }),
+    });
+  } catch (error) {
+    // Timeout ou falha de rede: tratado como indisponibilidade da API.
+    throw new ApiError(
+      `Deadlock API indisponível em ${path}: ${error instanceof Error ? error.message : error}`,
+      504,
+    );
+  }
   if (!res.ok) {
     throw new ApiError(`Deadlock API ${res.status} em ${path}`, res.status);
   }
@@ -301,6 +322,45 @@ export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
     super(message);
     this.name = "ApiError";
+  }
+}
+
+/**
+ * Código de erro devolvido pelas rotas de API ao navegador. A mensagem real
+ * (com caminho e status da Deadlock API) fica só no log do servidor; o cliente
+ * recebe um código e mostra o texto no idioma da página.
+ */
+export function errorCode(error: unknown): "rate_limited" | "upstream" {
+  return error instanceof ApiError && error.status === 429
+    ? "rate_limited"
+    : "upstream";
+}
+
+/** Maior account_id possível: o SteamID3 é um inteiro de 32 bits sem sinal. */
+const MAX_ACCOUNT_ID = 0xffffffff;
+
+/** Converte a entrada em account_id válido, ou null. */
+export function parseAccountId(raw: string | null | undefined): number | null {
+  if (!raw || !/^\d{1,10}$/.test(raw)) return null;
+  const id = Number(raw);
+  return id > 0 && id <= MAX_ACCOUNT_ID ? id : null;
+}
+
+/**
+ * O link do perfil vem da API e vai parar num `href`. Só aceitamos o perfil na
+ * própria Steam: qualquer outra coisa (um `javascript:` vindo de dado
+ * adulterado, por exemplo) é descartada.
+ */
+function safeProfileUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" &&
+      parsed.hostname === "steamcommunity.com"
+      ? parsed.toString()
+      : null;
+  } catch {
+    return null;
   }
 }
 
@@ -390,7 +450,7 @@ export async function getFrequentMates(
 
 function stripProfile(p: SteamProfile & { friends?: unknown }): SteamProfile {
   const { friends: _friends, ...rest } = p;
-  return rest;
+  return { ...rest, profileurl: safeProfileUrl(rest.profileurl) };
 }
 
 export async function getMatchHistory(accountId: number): Promise<MatchHistoryEntry[]> {

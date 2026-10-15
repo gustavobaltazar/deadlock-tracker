@@ -18,6 +18,7 @@ import {
   getProfile,
   getRank,
   isWin,
+  parseAccountId,
   pickSignatureHero,
   toMatchViews,
 } from "@/lib/api";
@@ -36,8 +37,8 @@ export async function generateMetadata({
 }) {
   const { locale, accountId } = await params;
   const t = getDictionary(isLocale(locale) ? locale : "en");
-  const id = Number(accountId);
-  if (!Number.isInteger(id) || id <= 0) return {};
+  const id = parseAccountId(accountId);
+  if (id == null) return {};
 
   const profile = await getProfile(id);
   const nome = profile?.personaname ?? fill(t.player.unknown, { id });
@@ -62,8 +63,8 @@ export default async function PlayerPage({
   const { locale: rawLocale, accountId } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "en";
   const t = getDictionary(locale);
-  const id = Number(accountId);
-  if (!Number.isInteger(id) || id <= 0) notFound();
+  const id = parseAccountId(accountId);
+  if (id == null) notFound();
 
   const [
     profile,

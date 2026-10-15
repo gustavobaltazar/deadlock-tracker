@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "./I18nProvider";
-import { fill } from "@/lib/i18n";
+import { apiErrorMessage, fill } from "@/lib/i18n";
 
 type Result = {
   account_id: number;
@@ -52,7 +52,9 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
         };
         setResults(data.results ?? []);
         setExact(data.exact ?? null);
-        setError(data.error ?? null);
+        setError(
+          data.error ? apiErrorMessage(data.error, t, t.errors.upstream) : null,
+        );
         setHighlight(0);
         setOpen(true);
       } catch {
@@ -66,7 +68,7 @@ export default function SearchBar({ autoFocus = false }: { autoFocus?: boolean }
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query]);
+  }, [query, t]);
 
   // Mantém a opção destacada visível ao navegar com as setas.
   useEffect(() => {

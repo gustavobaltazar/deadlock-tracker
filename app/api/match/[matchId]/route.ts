@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import {
   analyzeBuild,
+  errorCode,
   getHeroMap,
   getItemMap,
   getMatchDetail,
+  parseAccountId,
 } from "@/lib/api";
+import { cdnCache, NO_STORE } from "@/lib/http";
 
 /**
  * Detalhe de uma partida: os 12 jogadores com suas builds e, quando há um
@@ -16,26 +19,30 @@ export async function GET(
   { params }: { params: Promise<{ matchId: string }> },
 ) {
   const { matchId } = await params;
-  const id = Number(matchId);
-  const accountId = Number(new URL(request.url).searchParams.get("account_id"));
+  const id = /^\d{1,12}$/.test(matchId) ? Number(matchId) : 0;
+  const rawAccount = new URL(request.url).searchParams.get("account_id");
+  const accountId = parseAccountId(rawAccount);
 
-  if (!Number.isInteger(id) || id <= 0) {
-    return NextResponse.json({ error: "match_id inválido" }, { status: 400 });
+  if (id <= 0 || (rawAccount && accountId == null)) {
+    return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });
   }
 
   try {
     const [heroes, items] = await Promise.all([getHeroMap(), getItemMap()]);
     const detail = await getMatchDetail(id, heroes, items);
     if (!detail) {
+      // Pode ser só defasagem de coleta: cache curto, para a partida aparecer
+      // assim que a API a indexar.
       return NextResponse.json(
-        { error: "Partida não encontrada na base da API." },
-        { status: 404 },
+        { error: "not_found" },
+        { status: 404, headers: cdnCache(60, 60) },
       );
     }
 
-    const me = Number.isInteger(accountId)
-      ? detail.players.find((p) => p.accountId === accountId)
-      : undefined;
+    const me =
+      accountId != null
+        ? detail.players.find((p) => p.accountId === accountId)
+        : undefined;
 
     let analysis = null;
     if (me) {
@@ -53,9 +60,13 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ detail, analysis });
+    // Partida encerrada não muda; a referência de builds muda devagar.
+    return NextResponse.json({ detail, analysis }, { headers: cdnCache(3600) });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
-    return NextResponse.json({ error: message }, { status: 502 });
+    console.error("[api/match]", error);
+    return NextResponse.json(
+      { error: errorCode(error) },
+      { status: 502, headers: NO_STORE },
+    );
   }
 }

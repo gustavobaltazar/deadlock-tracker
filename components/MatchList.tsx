@@ -5,7 +5,7 @@ import { useI18n } from "./I18nProvider";
 import MatchDetails from "./MatchDetails";
 import MatchRow from "./MatchRow";
 import type { MatchView } from "@/lib/api";
-import { fill } from "@/lib/i18n";
+import { apiErrorMessage, fill } from "@/lib/i18n";
 
 const PAGE_SIZE = 20;
 
@@ -35,7 +35,10 @@ export default function MatchList({
         `/api/matches?account_id=${accountId}&offset=${matches.length}&limit=${PAGE_SIZE}`,
       );
       const data = (await res.json()) as { matches?: MatchView[]; error?: string };
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        setError(apiErrorMessage(data.error, t, t.match.loadError));
+        return;
+      }
       setMatches((prev) => [...prev, ...(data.matches ?? [])]);
     } catch {
       setError(t.match.loadError);

@@ -77,6 +77,8 @@ export async function resolveVanity(vanity: string): Promise<number | null> {
       {
         headers: { Accept: "application/xml" },
         next: { revalidate: 86400 },
+        // A Steam às vezes trava; sem limite a função ficaria presa esperando.
+        signal: AbortSignal.timeout(8_000),
       },
     );
     if (!res.ok) return null;

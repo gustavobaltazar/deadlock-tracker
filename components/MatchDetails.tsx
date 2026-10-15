@@ -6,7 +6,12 @@ import ItemBuild, { ItemHover } from "./ItemBuild";
 import SoulIcon from "./SoulIcon";
 import type { BuildAnalysis, MatchDetail, MatchPlayer } from "@/lib/api";
 import { compact as compactNum } from "@/lib/format";
-import { fill, type Dictionary, type Locale } from "@/lib/i18n";
+import {
+  apiErrorMessage,
+  fill,
+  type Dictionary,
+  type Locale,
+} from "@/lib/i18n";
 
 /** Times do Deadlock, nas cores oficiais team1_color / team2_color. */
 const TEAMS = [
@@ -38,14 +43,13 @@ export default function MatchDetails({
           signal: controller.signal,
         });
         const json = await res.json();
-        if (json.error) throw new Error(json.error);
-        setData(json);
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          setError(
-            err instanceof Error ? err.message : t.match.detailsError,
-          );
+        if (json.error) {
+          setError(apiErrorMessage(json.error, t, t.match.detailsError));
+          return;
         }
+        setData(json);
+      } catch {
+        if (!controller.signal.aborted) setError(t.match.detailsError);
       }
     })();
     return () => controller.abort();

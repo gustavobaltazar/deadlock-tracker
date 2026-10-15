@@ -41,7 +41,7 @@ export default function PlayerHeader({
           src={signatureHero.background}
           alt=""
           fill
-          priority
+          preload
           sizes="(max-width: 1100px) 100vw, 1100px"
           className="object-cover object-center opacity-70"
         />
@@ -54,7 +54,7 @@ export default function PlayerHeader({
             alt={signatureHero.name}
             width={280}
             height={380}
-            priority
+            preload
             className="ml-auto h-full w-full object-contain object-bottom opacity-95 drop-shadow-2xl"
             style={{
               maskImage:

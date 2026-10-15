@@ -159,6 +159,8 @@ const en = {
     genericBody:
       "The Deadlock API may be unstable or rate limited right now.",
     retry: "Try again",
+    rateLimited: "Too many requests right now. Wait a moment and try again.",
+    upstream: "The Deadlock API did not respond. Try again in a moment.",
   },
   language: "Language",
 };
@@ -304,6 +306,8 @@ const pt: Dictionary = {
     genericBody:
       "A Deadlock API pode estar instável ou com limite de requisições atingido.",
     retry: "Tentar novamente",
+    rateLimited: "Muitas requisições agora. Aguarde um instante e tente de novo.",
+    upstream: "A Deadlock API não respondeu. Tente de novo em instantes.",
   },
   language: "Idioma",
 };
@@ -312,6 +316,27 @@ const dictionaries: Record<Locale, Dictionary> = { en, pt };
 
 export function getDictionary(locale: Locale): Dictionary {
   return dictionaries[locale] ?? dictionaries[defaultLocale];
+}
+
+/**
+ * Texto para um código de erro das rotas de API. O servidor nunca manda a
+ * mensagem pronta: ela sairia num idioma só e poderia expor detalhes internos.
+ */
+export function apiErrorMessage(
+  code: string | undefined,
+  t: Dictionary,
+  fallback: string,
+): string {
+  switch (code) {
+    case "rate_limited":
+      return t.errors.rateLimited;
+    case "unresolved_url":
+      return t.search.unresolvedUrl;
+    case "upstream":
+      return t.errors.upstream;
+    default:
+      return fallback;
+  }
 }
 
 /** Substitui marcadores {chave} por valores. */

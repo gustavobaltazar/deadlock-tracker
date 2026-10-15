@@ -21,7 +21,7 @@ export default async function HomePage({
           src={CITY_BACKGROUND}
           alt=""
           fill
-          priority
+          preload
           sizes="100vw"
           className="object-cover object-bottom opacity-70"
         />
