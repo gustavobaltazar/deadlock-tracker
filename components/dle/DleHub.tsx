@@ -34,13 +34,14 @@ export default function DleHub({
       const rows = readProgress<GuessBase>(mode, day);
       return { tries: rows.length, won: rows.some((r) => r.correct) };
     };
-    setProgress({ classic: read("classic"), voice: read("voice") });
+    setProgress({ classic: read("classic"), voice: read("voice"), ability: read("ability") });
   }, [day]);
 
   const tries = (n: number) => (n === 1 ? t.dle.tryOne : t.dle.tryMany);
   const modes: { mode: DleMode; accent: string }[] = [
     { mode: "classic", accent: "#69e799" },
     { mode: "voice", accent: "#ffed79" },
+    { mode: "ability", accent: "#b48cff" },
   ];
   const solvedCount = modes.filter((m) => progress[m.mode]?.won).length;
 
@@ -104,22 +105,6 @@ export default function DleHub({
           </Link>
         );
       })}
-
-      {/* Próximo modo, como vitrine: mostra que o jogo vai crescer. */}
-      <div className="flex items-center gap-4 rounded-xl border-2 border-dashed border-border/70 px-5 py-4 opacity-60">
-        <span className="grid size-14 shrink-0 place-items-center rounded-full border-2 border-border bg-bg text-muted">
-          <ModeIcon mode="ability" className="size-7" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-lg font-extrabold tracking-wide">
-            {t.dle.modes.ability.title}
-          </span>
-          <span className="block text-xs text-muted">{t.dle.modes.ability.desc}</span>
-        </span>
-        <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
-          {t.dle.hub.soon}
-        </span>
-      </div>
 
       <div className="pt-3 text-center">
         <p className="text-xs text-muted">

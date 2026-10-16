@@ -124,9 +124,26 @@ body {
   animation: dle-pulse 2s ease-out infinite;
 }
 
+/* Modo Habilidade: cada estágio novo do ícone entra como um zoom-out. */
+@keyframes dle-zoom-out {
+  from {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.dle-zoom-out {
+  animation: dle-zoom-out 0.5s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dle-eq,
-  .dle-pulse {
+  .dle-pulse,
+  .dle-zoom-out {
     animation: none;
   }
 }

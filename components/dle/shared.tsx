@@ -8,7 +8,10 @@ import { fill } from "@/lib/i18n";
 /** Peças comuns aos modos do Deadlockdle. */
 
 export type DleOption = { id: number; name: string; icon: string | null };
-export type DleMode = "classic" | "voice";
+export type DleMode = "classic" | "voice" | "ability";
+
+/** Modos na ordem em que aparecem nas abas, no menu e na home. */
+export const DLE_MODES: DleMode[] = ["classic", "voice", "ability"];
 
 /** Tudo que um palpite precisa ter, em qualquer modo. */
 export type GuessBase = { heroId: number; name: string; icon: string | null; correct: boolean };
@@ -311,6 +314,35 @@ export function WinCard({
         )}
       </div>
     </section>
+  );
+}
+
+/** Palpites dos modos de acertou-ou-não (Voz, Habilidade): uma linha por herói. */
+export function GuessList({ rows, fresh }: { rows: GuessBase[]; fresh: number | null }) {
+  return (
+    <ul className="mx-auto max-w-[420px] space-y-1.5">
+      {rows.map((r) => (
+        <li
+          key={r.heroId}
+          className={
+            "flex items-center gap-3 rounded-md border-2 px-2 py-1.5 " +
+            (r.heroId === fresh ? "dle-flip " : "") +
+            (r.correct
+              ? "border-win bg-[#1f7a43] text-white"
+              : "border-loss/70 bg-[#7c2a25] text-white")
+          }
+        >
+          {r.icon && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={r.icon} alt="" className="size-10 rounded bg-surface-2" />
+          )}
+          <span className="flex-1 text-sm font-bold">{r.name}</span>
+          <span className="pr-1 text-lg" aria-hidden="true">
+            {r.correct ? "✓" : "✕"}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 

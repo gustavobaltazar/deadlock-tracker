@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { errorCode } from "@/lib/api";
 import { compareHeroes, dleDay, getDlePool, heroOfDay } from "@/lib/dle";
+import { abilityOfDay } from "@/lib/dle-ability";
 import { voiceOfDay } from "@/lib/dle-voice";
 import { cdnCache, NO_STORE } from "@/lib/http";
 
@@ -13,6 +14,8 @@ import { cdnCache, NO_STORE } from "@/lib/http";
  *
  * - `mode=classic` (padrão): linha com os atributos comparados.
  * - `mode=voice`: só acertou ou não, como no modo Quote do Loldle.
+ * - `mode=ability`: acertou ou não; o palpite certo traz os nomes das quatro
+ *   habilidades do herói, para a rodada bônus.
  */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
@@ -23,7 +26,7 @@ export async function GET(request: Request) {
   if (day !== dleDay()) {
     return NextResponse.json({ error: "stale_day" }, { status: 409, headers: NO_STORE });
   }
-  if (mode !== "classic" && mode !== "voice") {
+  if (mode !== "classic" && mode !== "voice" && mode !== "ability") {
     return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });
   }
 
@@ -39,6 +42,23 @@ export async function GET(request: Request) {
         name: guess.name,
         icon: guess.icon,
         correct: guess.id === hero.id,
+      };
+      return NextResponse.json({ row }, { headers: cdnCache(3600, 3600) });
+    }
+
+    if (mode === "ability") {
+      const { hero, pool, abilities } = await abilityOfDay(day);
+      const guess = pool.find((h) => h.id === heroId);
+      if (!guess) {
+        return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });
+      }
+      const correct = guess.id === hero.id;
+      const row = {
+        heroId: guess.id,
+        name: guess.name,
+        icon: guess.icon,
+        correct,
+        ...(correct ? { abilities: abilities.map((a) => a.name) } : {}),
       };
       return NextResponse.json({ row }, { headers: cdnCache(3600, 3600) });
     }

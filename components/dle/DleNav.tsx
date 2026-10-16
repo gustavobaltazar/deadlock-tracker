@@ -5,9 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useI18n } from "../I18nProvider";
 import ModeIcon from "./ModeIcon";
-import { readProgress, type DleMode, type GuessBase } from "./shared";
-
-const MODES: DleMode[] = ["classic", "voice"];
+import { readProgress, DLE_MODES as MODES, type DleMode, type GuessBase } from "./shared";
 
 /**
  * Abas dos modos, no topo de toda página do Deadlockdle. Um modo já resolvido

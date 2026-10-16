@@ -104,7 +104,7 @@ export function dleDay(date = new Date()): string {
 }
 
 /** Semente de cada modo. A do clássico não pode mudar: mudaria o herói do dia. */
-export const DLE_SALT = { classic: 0x5ea4c, voice: 0x7f3a1 } as const;
+export const DLE_SALT = { classic: 0x5ea4c, voice: 0x7f3a1, ability: 0x3b9d7 } as const;
 
 /** Gerador pseudoaleatório determinístico (mulberry32). */
 export function seeded(seed: number) {

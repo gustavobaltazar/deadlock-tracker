@@ -34,7 +34,7 @@ export default function ModeIcon({
       </svg>
     );
   }
-  // Habilidade: losango com brilho, ainda sem modo.
+  // Habilidade: losango com brilho.
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
       <path d="M12 2 21 12 12 22 3 12z" opacity="0.35" />

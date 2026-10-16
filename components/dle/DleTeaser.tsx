@@ -4,9 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useI18n } from "../I18nProvider";
 import ModeIcon from "./ModeIcon";
-import { Countdown, readProgress, type DleMode, type GuessBase } from "./shared";
-
-const MODES: DleMode[] = ["classic", "voice"];
+import { Countdown, readProgress, DLE_MODES as MODES, type DleMode, type GuessBase } from "./shared";
 
 /**
  * Chamada do Deadlockdle na home, logo abaixo da busca.

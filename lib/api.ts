@@ -116,6 +116,8 @@ export type Hero = {
   styleHex: string | null;
   /** Atributos do herói usados no Deadlockdle. */
   traits: HeroTraits;
+  /** `class_name` das quatro habilidades do herói, na ordem das teclas 1 a 4. */
+  abilities: string[];
 };
 
 export type HeroTraits = {
@@ -559,6 +561,7 @@ export const getHeroMap = memoize(86400, async (): Promise<Map<number, Hero>> =>
     class_name?: string | null;
     description?: { role?: string | null } | null;
     starting_stats?: { max_health?: { value?: number } };
+    items?: Record<string, string> | null;
   };
   const raw = await get<RawHero[]>("/v1/assets/heroes", "no-store");
   const map = new Map<number, Hero>();
@@ -586,6 +589,9 @@ export const getHeroMap = memoize(86400, async (): Promise<Map<number, Hero>> =>
         codename: (h.class_name ?? "").replace(/^hero_/, ""),
         blurb: h.description?.role ?? "",
       },
+      abilities: [1, 2, 3, 4]
+        .map((n) => h.items?.[`signature${n}`])
+        .filter((c): c is string => Boolean(c)),
     });
   }
   return map;

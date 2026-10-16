@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "../I18nProvider";
 import {
+  GuessList,
   HeroPicker,
   WinCard,
   Yesterday,
@@ -113,29 +114,7 @@ export default function VoiceGame({
           {t.dle.voice.empty}
         </p>
       ) : (
-        <ul className="mx-auto max-w-[420px] space-y-1.5">
-          {rows.map((r) => (
-            <li
-              key={r.heroId}
-              className={
-                "flex items-center gap-3 rounded-md border-2 px-2 py-1.5 " +
-                (r.heroId === fresh ? "dle-flip " : "") +
-                (r.correct
-                  ? "border-win bg-[#1f7a43] text-white"
-                  : "border-loss/70 bg-[#7c2a25] text-white")
-              }
-            >
-              {r.icon && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={r.icon} alt="" className="size-10 rounded bg-surface-2" />
-              )}
-              <span className="flex-1 text-sm font-bold">{r.name}</span>
-              <span className="pr-1 text-lg" aria-hidden="true">
-                {r.correct ? "✓" : "✕"}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <GuessList rows={rows} fresh={fresh} />
       )}
 
       <Yesterday hero={yesterday} />
