@@ -13,7 +13,7 @@ import {
   getHeroStats,
   getItemMap,
   getFrequentMates,
-  getMatchHighlights,
+  findBestMatch,
   getMatchItems,
   getRankAssets,
   getMatchHistory,
@@ -21,7 +21,6 @@ import {
   getRank,
   isWin,
   parseAccountId,
-  pickBestMatch,
   pickSignatureHero,
   toMatchViews,
 } from "@/lib/api";
@@ -92,15 +91,15 @@ export default async function PlayerPage({
   if (!profile && matches.length === 0) notFound();
 
   const recent = matches.slice(0, RECENT_COUNT);
-  const best = pickBestMatch(matches);
-  const [builds, bestHighlights] = await Promise.all([
+
+  const [builds, best] = await Promise.all([
     // Uma única chamada em lote cobre as builds de todas as partidas exibidas.
     getMatchItems(
       id,
       recent.map((m) => m.match_id),
       itemCatalog,
     ),
-    best ? getMatchHighlights(best.match_id, id, itemCatalog) : null,
+    findBestMatch(id, matches, itemCatalog),
   ]);
   const wins = recent.filter(isWin).length;
   const losses = recent.length - wins;
@@ -217,9 +216,9 @@ export default async function PlayerPage({
         <div className="min-w-0 space-y-5">
           {best && (
             <BestMatch
-              match={best}
-              highlights={bestHighlights}
-              hero={heroes.get(best.hero_id)}
+              match={best.match}
+              highlights={best.highlights}
+              hero={heroes.get(best.match.hero_id)}
               total={matches.length}
               locale={locale}
               t={t}

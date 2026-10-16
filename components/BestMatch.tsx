@@ -19,8 +19,7 @@ const GOLD = "#ffed79";
  *
  * Os números com estrela são as estatísticas em que ele foi o maior dos 12
  * jogadores da partida — o mesmo destaque que o placar de fim de jogo dá.
- * Sem metadata na API, o cartão ainda aparece com o que o histórico tem
- * (K/D/A, almas, last hits), só que sem estrelas, MVP e accolades.
+ * Só partidas com metadata na API chegam aqui (ver `findBestMatch`).
  */
 export default function BestMatch({
   match,
@@ -31,7 +30,7 @@ export default function BestMatch({
   t,
 }: {
   match: MatchHistoryEntry;
-  highlights: MatchHighlights | null;
+  highlights: MatchHighlights;
   hero: Hero | undefined;
   total: number;
   locale: Locale;
@@ -40,10 +39,13 @@ export default function BestMatch({
   const win = isWin(match);
   const tint = hero?.styleHex ?? "#c6a269";
   const minutes = match.match_duration_s / 60;
-  const top = new Set<HighlightStat>(highlights?.top ?? []);
-  const lastHits = highlights?.stats.lastHits ?? match.last_hits;
-  const denies = highlights?.stats.denies ?? match.denies;
+  const { stats } = highlights;
+  const top = new Set<HighlightStat>(highlights.top);
+  const perMin = (value: number) =>
+    fill(t.best.perMin, { n: compact(Math.round(value / minutes), locale) });
 
+  // Sempre 8 quadrados, na ordem do placar: combate em cima, economia e dano
+  // embaixo — a grade 4x2 fecha sem buraco.
   const tiles: {
     key: string;
     label: string;
@@ -55,25 +57,25 @@ export default function BestMatch({
     {
       key: "kills",
       label: t.best.kills,
-      value: match.player_kills,
+      value: stats.kills,
       star: top.has("kills"),
     },
     {
       key: "deaths",
       label: t.best.deaths,
-      value: match.player_deaths,
+      value: stats.deaths,
       tone: "text-loss",
     },
     {
       key: "assists",
       label: t.best.assists,
-      value: match.player_assists,
+      value: stats.assists,
       star: top.has("assists"),
     },
     {
       key: "kda",
       label: t.match.kda,
-      value: kda(match.player_kills, match.player_deaths, match.player_assists, t),
+      value: kda(stats.kills, stats.deaths, stats.assists, t),
     },
     {
       key: "souls",
@@ -81,43 +83,36 @@ export default function BestMatch({
       value: (
         <span className="inline-flex items-center gap-1">
           <SoulIcon className="h-4 w-auto text-souls" />
-          {compact(match.net_worth, locale)}
+          {compact(stats.netWorth, locale)}
         </span>
       ),
-      sub: fill(t.best.perMin, {
-        n: compact(Math.round(match.net_worth / minutes), locale),
-      }),
+      sub: perMin(stats.netWorth),
       star: top.has("netWorth"),
     },
-    ...(highlights
-      ? [
-          {
-            key: "damage",
-            label: t.best.damage,
-            value: compact(highlights.stats.damage, locale),
-            sub: fill(t.best.perMin, {
-              n: compact(Math.round(highlights.stats.damage / minutes), locale),
-            }),
-            star: top.has("damage"),
-          },
-          {
-            key: "healing",
-            label: t.best.healing,
-            value: compact(highlights.stats.healing, locale),
-            star: top.has("healing"),
-          },
-        ]
-      : []),
+    {
+      key: "damage",
+      label: t.best.damage,
+      value: compact(stats.damage, locale),
+      sub: perMin(stats.damage),
+      star: top.has("damage"),
+    },
+    {
+      key: "healing",
+      label: t.best.healing,
+      value: compact(stats.healing, locale),
+      sub: perMin(stats.healing),
+      star: top.has("healing"),
+    },
     {
       key: "lastHits",
       label: t.best.lastHits,
-      value: lastHits,
-      sub: fill(t.best.denies, { n: denies }),
+      value: stats.lastHits,
+      sub: fill(t.best.denies, { n: stats.denies }),
       star: top.has("lastHits"),
     },
   ];
 
-  const mvp = highlights?.mvpRank;
+  const mvp = highlights.mvpRank;
 
   return (
     <section
@@ -200,7 +195,7 @@ export default function BestMatch({
           </div>
 
           {/* Estatísticas */}
-          <div className="grid min-w-0 flex-1 grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <div className="grid min-w-0 flex-1 auto-rows-fr grid-cols-2 gap-1.5 sm:grid-cols-4">
             {tiles.map((tile) => (
               <div
                 key={tile.key}
@@ -215,15 +210,17 @@ export default function BestMatch({
                 </div>
                 <div
                   className={
-                    "mt-0.5 text-lg font-bold tabular-nums " + (tile.tone ?? "")
+                    "mt-0.5 text-lg font-bold leading-6 tabular-nums " + (tile.tone ?? "")
                   }
                   style={tile.star ? { color: GOLD } : undefined}
                 >
                   {tile.value}
                 </div>
-                {tile.sub && (
-                  <div className="text-[10px] tabular-nums text-muted">{tile.sub}</div>
-                )}
+                {/* Linha sempre presente, mesmo vazia: mantém rótulo, valor e
+                    subtítulo na mesma altura em todos os quadrados. */}
+                <div className="truncate text-[10px] tabular-nums text-muted">
+                  {tile.sub ?? " "}
+                </div>
                 {tile.star && (
                   <span
                     className="absolute right-1.5 top-1.5"
@@ -238,14 +235,13 @@ export default function BestMatch({
           </div>
         </div>
 
-        {highlights ? (
-          <div className="space-y-3 border-t border-border/70 px-3 py-3">
+        <div className="space-y-3 border-t border-border/70 px-3 py-3">
             {highlights.accolades.length > 0 && (
               <div>
                 <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-muted">
                   {t.best.accolades}
                 </h3>
-                <ul className="flex flex-wrap gap-1.5">
+                <ul className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
                   {highlights.accolades.slice(0, 6).map((a) => (
                     <li
                       key={a.id}
@@ -270,12 +266,7 @@ export default function BestMatch({
                 <ItemBuild items={highlights.items} />
               </div>
             )}
-          </div>
-        ) : (
-          <p className="border-t border-border/70 px-3 py-2 text-[11px] text-muted">
-            {t.best.noDetails}
-          </p>
-        )}
+        </div>
       </div>
     </section>
   );

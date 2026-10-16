@@ -777,7 +777,7 @@ export async function getMatchItems(
 }
 
 /**
- * Melhor partida do histórico inteiro.
+ * Partidas elegíveis a "melhor partida", da melhor para a pior.
  *
  * Cada partida é comparada com a média do próprio jogador, e não com valores
  * absolutos: 30 mil almas é muito para um suporte e pouco para um carry, e o
@@ -794,9 +794,7 @@ export async function getMatchItems(
  * verdade (bots, lobby privado, tutorial), partidas com abandono e as abaixo
  * de 15 minutos, em que um stomp curto infla qualquer média.
  */
-export function pickBestMatch(
-  matches: MatchHistoryEntry[],
-): MatchHistoryEntry | null {
+function rankMatches(matches: MatchHistoryEntry[]): MatchHistoryEntry[] {
   const MIN_DURATION_S = 15 * 60;
   const RATIO_CAP = 3;
 
@@ -808,7 +806,7 @@ export function pickBestMatch(
       !m.team_abandoned &&
       !m.abandoned_time_s,
   );
-  if (eligible.length === 0) return null;
+  if (eligible.length === 0) return [];
 
   const measures = eligible.map((m) => {
     const minutes = m.match_duration_s / 60;
@@ -827,16 +825,64 @@ export function pickBestMatch(
   const ratio = (value: number, mean: number) =>
     Math.min(RATIO_CAP, value / mean);
 
-  let best: { match: MatchHistoryEntry; score: number } | null = null;
-  for (const x of measures) {
-    const score =
-      (0.4 * ratio(x.soulsPerMin, avgSouls) +
-        0.35 * ratio(x.kda, avgKda) +
-        0.25 * ratio(x.fightsPerMin, avgFights)) *
-      (isWin(x.match) ? 1.1 : 1);
-    if (!best || score > best.score) best = { match: x.match, score };
+  return measures
+    .map((x) => ({
+      match: x.match,
+      score:
+        (0.4 * ratio(x.soulsPerMin, avgSouls) +
+          0.35 * ratio(x.kda, avgKda) +
+          0.25 * ratio(x.fightsPerMin, avgFights)) *
+        (isWin(x.match) ? 1.1 : 1),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map((x) => x.match);
+}
+
+/**
+ * Quantas das partidas mais bem colocadas são checadas atrás de metadata.
+ * A resposta só traz as que existem (~280 bytes cada), então o custo cresce
+ * com o que a API tem, não com o tamanho da lista.
+ */
+const BEST_CANDIDATES = 200;
+
+/**
+ * Melhor partida que tem detalhes na API.
+ *
+ * O histórico cobre partidas que a API nunca chegou a detalhar — contas antigas
+ * ou que não enviam dados costumam ter boa parte sem metadata. Sem ela não há
+ * dano, MVP nem accolades, então a melhor partida "de verdade" é a mais bem
+ * colocada entre as que têm metadata. Uma consulta em lote sem colunas extras
+ * diz quais existem; só a vencedora tem os destaques buscados.
+ */
+export async function findBestMatch(
+  accountId: number,
+  matches: MatchHistoryEntry[],
+  items: Map<number, ItemView>,
+): Promise<{ match: MatchHistoryEntry; highlights: MatchHighlights } | null> {
+  const ranked = rankMatches(matches).slice(0, BEST_CANDIDATES);
+  if (ranked.length === 0) return null;
+
+  const query = new URLSearchParams({
+    match_ids: ranked.map((m) => m.match_id).join(","),
+    account_ids: String(accountId),
+    only_filtered_players: "true",
+    limit: String(ranked.length),
+  });
+  let available: Set<number>;
+  try {
+    const rows = await get<{ match_id: number }[]>(
+      "/v1/matches/metadata?" + query.toString(),
+      3600,
+    );
+    available = new Set(rows.map((r) => r.match_id));
+  } catch {
+    return null;
   }
-  return best?.match ?? null;
+
+  const match = ranked.find((m) => available.has(m.match_id));
+  if (!match) return null;
+  const highlights = await getMatchHighlights(match.match_id, accountId, items);
+  return highlights ? { match, highlights } : null;
 }
 
 /** Estatísticas em que o jogo destaca quem foi o melhor da partida. */
