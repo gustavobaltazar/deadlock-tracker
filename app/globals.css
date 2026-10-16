@@ -147,3 +147,174 @@ body {
     animation: none;
   }
 }
+
+/*
+ * A Torre: números de dano subindo, abertura de luta (VS, "LUTE!"), cartas
+ * de recompensa entrando, vida baixa pulsando e inimigos caindo.
+ */
+@keyframes tower-float {
+  0% {
+    transform: translate(-50%, 0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, -14px) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -70px) scale(1);
+    opacity: 0;
+  }
+}
+
+.tower-float {
+  animation: tower-float 1s ease-out forwards;
+}
+
+@keyframes tower-pop {
+  0% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.92);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tower-vs,
+.tower-go {
+  animation: tower-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.tower-vs {
+  animation-delay: 0.5s;
+}
+
+@keyframes tower-slide-left {
+  from {
+    transform: translateX(-60%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes tower-slide-right {
+  from {
+    transform: translateX(60%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.tower-slide-left {
+  animation: tower-slide-left 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.tower-slide-right {
+  animation: tower-slide-right 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes tower-cast {
+  0% {
+    transform: translate(-50%, 8px) scale(0.9);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.tower-cast {
+  animation: tower-cast 1.6s ease-out forwards;
+}
+
+@keyframes tower-card {
+  from {
+    transform: perspective(600px) rotateY(80deg) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: perspective(600px) rotateY(0) translateY(0);
+    opacity: 1;
+  }
+}
+
+.tower-card {
+  animation: tower-card 0.5s ease-out backwards;
+}
+
+@keyframes tower-landed {
+  0% {
+    transform: scale(1.25);
+    filter: brightness(2.5);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.tower-landed {
+  animation: tower-landed 0.6s ease-out;
+}
+
+@keyframes tower-low {
+  50% {
+    filter: brightness(1.6);
+  }
+}
+
+.tower-low {
+  animation: tower-low 0.8s ease-in-out infinite;
+}
+
+.tower-dead {
+  filter: grayscale(1) brightness(0.4);
+  opacity: 0.35;
+  transform: translateY(12px);
+}
+
+@keyframes tower-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(224, 75, 63, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(224, 75, 63, 0);
+  }
+}
+
+.tower-pulse {
+  animation: tower-pulse 1.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tower-vs,
+  .tower-go,
+  .tower-slide-left,
+  .tower-slide-right,
+  .tower-card,
+  .tower-landed,
+  .tower-low,
+  .tower-pulse {
+    animation: none;
+  }
+}
