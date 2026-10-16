@@ -41,6 +41,7 @@ export default function DleHub({
     { mode: "classic", accent: "#69e799" },
     { mode: "voice", accent: "#ffed79" },
     { mode: "ability", accent: "#b48cff" },
+    { mode: "emoji", accent: "#ff8fb1" },
   ];
   const solvedCount = modes.filter((m) => progress[m.mode]?.won).length;
 
@@ -100,7 +101,7 @@ export default function DleHub({
         <p className="mb-2 text-center text-[11px] font-bold uppercase tracking-widest text-muted">
           ↺ {t.dle.hub.yesterdayTitle}
         </p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {modes.map(({ mode, accent }) => {
             const p = past[mode];
             return (

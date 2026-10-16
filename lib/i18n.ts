@@ -180,6 +180,10 @@ const en = {
         title: "Ability",
         desc: "Guess the hero from an ability icon",
       },
+      emoji: {
+        title: "Emojis",
+        desc: "Guess the hero from emojis about their kit and look",
+      },
     },
     hub: {
       play: "Play",
@@ -191,7 +195,7 @@ const en = {
     },
     teaser: {
       badge: "Daily game",
-      desc: "Guess today's Deadlock hero from clues, their voice or an ability. A new hero every day.",
+      desc: "Guess today's Deadlock hero from clues, their voice, an ability or emojis. A new hero every day.",
       cta: "Play now",
       seeResults: "See today's results",
     },
@@ -209,6 +213,12 @@ const en = {
       volume: "Volume",
       mute: "Mute",
       unmute: "Unmute",
+    },
+    emoji: {
+      prompt: "Which hero is this?",
+      unlockIn: "in {n}",
+      empty:
+        "Each emoji hints at the hero: abilities, looks, quirks. You start with one, and every miss reveals the next, up to {n}.",
     },
     ability: {
       prompt: "Whose ability is this?",
@@ -456,6 +466,10 @@ const pt: Dictionary = {
         title: "Habilidade",
         desc: "Adivinhe o herói pelo ícone de uma habilidade",
       },
+      emoji: {
+        title: "Emojis",
+        desc: "Adivinhe o herói por emojis do kit e do visual dele",
+      },
     },
     hub: {
       play: "Jogar",
@@ -467,7 +481,7 @@ const pt: Dictionary = {
     },
     teaser: {
       badge: "Jogo diário",
-      desc: "Adivinhe o herói do Deadlock de hoje pelas pistas, pela voz ou por uma habilidade. Um herói novo todo dia.",
+      desc: "Adivinhe o herói do Deadlock de hoje pelas pistas, pela voz, por uma habilidade ou por emojis. Um herói novo todo dia.",
       cta: "Jogar agora",
       seeResults: "Ver resultados de hoje",
     },
@@ -485,6 +499,12 @@ const pt: Dictionary = {
       volume: "Volume",
       mute: "Silenciar",
       unmute: "Ativar som",
+    },
+    emoji: {
+      prompt: "Que herói é esse?",
+      unlockIn: "em {n}",
+      empty:
+        "Cada emoji é uma pista do herói: habilidades, visual, manias. Você começa com um, e cada erro revela o próximo, até {n}.",
     },
     ability: {
       prompt: "De quem é esta habilidade?",

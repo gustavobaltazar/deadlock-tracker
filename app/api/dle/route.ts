@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { errorCode } from "@/lib/api";
 import { compareHeroes, getDlePool, heroOfDay, isPlayableDay } from "@/lib/dle";
 import { abilityOfDay } from "@/lib/dle-ability";
+import { emojiOfDay } from "@/lib/dle-emoji";
 import { voiceOfDay } from "@/lib/dle-voice";
 import { cdnCache, NO_STORE } from "@/lib/http";
 
@@ -16,6 +17,7 @@ import { cdnCache, NO_STORE } from "@/lib/http";
  * - `mode=voice`: só acertou ou não, como no modo Quote do Loldle.
  * - `mode=ability`: acertou ou não; o palpite certo traz os nomes das quatro
  *   habilidades do herói, para a rodada bônus.
+ * - `mode=emoji`: só acertou ou não.
  */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
@@ -26,13 +28,13 @@ export async function GET(request: Request) {
   if (!isPlayableDay(day)) {
     return NextResponse.json({ error: "stale_day" }, { status: 409, headers: NO_STORE });
   }
-  if (mode !== "classic" && mode !== "voice" && mode !== "ability") {
+  if (!["classic", "voice", "ability", "emoji"].includes(mode)) {
     return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });
   }
 
   try {
-    if (mode === "voice") {
-      const { hero, pool } = await voiceOfDay(day);
+    if (mode === "voice" || mode === "emoji") {
+      const { hero, pool } = await (mode === "voice" ? voiceOfDay(day) : emojiOfDay(day));
       const guess = pool.find((h) => h.id === heroId);
       if (!guess) {
         return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });

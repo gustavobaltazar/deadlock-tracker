@@ -9,10 +9,10 @@ import { fill } from "@/lib/i18n";
 /** Peças comuns aos modos do Deadlockdle. */
 
 export type DleOption = { id: number; name: string; icon: string | null };
-export type DleMode = "classic" | "voice" | "ability";
+export type DleMode = "classic" | "voice" | "ability" | "emoji";
 
 /** Modos na ordem em que aparecem nas abas, no menu e na home. */
-export const DLE_MODES: DleMode[] = ["classic", "voice", "ability"];
+export const DLE_MODES: DleMode[] = ["classic", "voice", "ability", "emoji"];
 
 /** Tudo que um palpite precisa ter, em qualquer modo. */
 export type GuessBase = { heroId: number; name: string; icon: string | null; correct: boolean };
