@@ -4,6 +4,7 @@ import BestMatch from "@/components/BestMatch";
 import HeroStatsList from "@/components/HeroStatsList";
 import DataFreshness from "@/components/DataFreshness";
 import FrequentMates from "@/components/FrequentMates";
+import MvpCard from "@/components/MvpCard";
 import MatchList from "@/components/MatchList";
 import PlayerHeader from "@/components/PlayerHeader";
 import RankCard from "@/components/RankCard";
@@ -136,8 +137,6 @@ export default async function PlayerPage({
         profile={profile}
         signature={signature}
         signatureHero={signature ? heroes.get(signature.hero_id) : undefined}
-        mvps={mvps}
-        mvpHero={mvps?.topHero ? heroes.get(mvps.topHero.heroId) : undefined}
         locale={locale}
         t={t}
       />
@@ -149,6 +148,13 @@ export default async function PlayerPage({
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         {/* Coluna esquerda */}
         <div className="space-y-5">
+          {mvps && (
+            <MvpCard
+              mvps={mvps}
+              hero={mvps.topHero ? heroes.get(mvps.topHero.heroId) : undefined}
+              t={t}
+            />
+          )}
           <RankCard rank={rank} placeholder={rankAssets.get(0)} t={t} />
 
           <section className="rounded-lg border border-border bg-surface">
