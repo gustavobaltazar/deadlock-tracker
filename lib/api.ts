@@ -114,6 +114,23 @@ export type Hero = {
   portrait: string | null;
   /** Cor temática oficial do herói, ex. "#C93C26". */
   styleHex: string | null;
+  /** Atributos do herói usados no Deadlockdle. */
+  traits: HeroTraits;
+};
+
+export type HeroTraits = {
+  /** "male" | "female"; vazio quando a API não informa. */
+  gender: string;
+  /** "assassin" | "brawler" | "marksman" | "mystic" */
+  role: string;
+  /** Tipo de arma, como o jogo descreve ("Rapid Fire", "Pistol"…). */
+  weapon: string;
+  /** As três tags de personalidade do herói. */
+  tags: string[];
+  /** Dificuldade do herói, de 1 a 4. */
+  complexity: number;
+  /** Vida base no nível 1. */
+  health: number;
 };
 
 /** Partida já enriquecida com os dados do herói, pronta para o cliente. */
@@ -300,7 +317,7 @@ const TIMEOUT_CATALOG_MS = 25_000;
  * `revalidate` em segundos usa o data cache do Next; `"no-store"` pula esse
  * cache, para respostas grandes demais que são cacheadas com `memoize`.
  */
-async function get<T>(
+export async function get<T>(
   path: string,
   revalidate: number | "no-store",
 ): Promise<T> {
@@ -340,7 +357,7 @@ async function get<T>(
  * processado, bem menor, na memória do processo. Quem chega enquanto a busca
  * está em andamento reaproveita a mesma promessa; se ela falhar, sai do cache.
  */
-function memoize<T>(ttlSeconds: number, load: () => Promise<T>): () => Promise<T> {
+export function memoize<T>(ttlSeconds: number, load: () => Promise<T>): () => Promise<T> {
   let cached: { value: Promise<T>; expires: number } | null = null;
   return () => {
     if (cached && cached.expires > Date.now()) return cached.value;
@@ -517,6 +534,12 @@ export async function getHeroStats(accountId: number): Promise<PlayerHeroStats[]
   }
 }
 
+/**
+ * Gênero dos heróis que a API deixa em branco. Sinclair (60) é o mágico
+ * "The Magnificent Sinclair", tratado no masculino pelo próprio jogo.
+ */
+const GENDER_FALLBACK: Record<number, string> = { 60: "male" };
+
 /** /v1/assets/heroes responde ~2,5 MB; reduzimos para o mínimo e cacheamos por 24h. */
 export const getHeroMap = memoize(86400, async (): Promise<Map<number, Hero>> => {
   type RawHero = {
@@ -524,6 +547,12 @@ export const getHeroMap = memoize(86400, async (): Promise<Map<number, Hero>> =>
     name: string;
     images?: Record<string, string | null>;
     colors?: { style_hex?: string | null };
+    gender?: string | null;
+    hero_type?: string | null;
+    gun_tag?: string | null;
+    tags?: string[] | null;
+    complexity?: number | null;
+    starting_stats?: { max_health?: { value?: number } };
   };
   const raw = await get<RawHero[]>("/v1/assets/heroes", "no-store");
   const map = new Map<number, Hero>();
@@ -541,6 +570,14 @@ export const getHeroMap = memoize(86400, async (): Promise<Map<number, Hero>> =>
         h.images?.icon_hero_card_webp ??
         null,
       styleHex: h.colors?.style_hex ?? null,
+      traits: {
+        gender: h.gender || GENDER_FALLBACK[h.id] || "",
+        role: h.hero_type ?? "",
+        weapon: h.gun_tag ?? "",
+        tags: h.tags ?? [],
+        complexity: h.complexity ?? 0,
+        health: h.starting_stats?.max_health?.value ?? 0,
+      },
     });
   }
   return map;

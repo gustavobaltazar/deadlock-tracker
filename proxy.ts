@@ -13,6 +13,9 @@ const LIMITS: { pattern: RegExp; name: string; limit: Limit }[] = [
   { pattern: /^\/api\/search/, name: "search", limit: { max: 60, windowMs: 60_000 } },
   { pattern: /^\/api\/match\//, name: "match", limit: { max: 30, windowMs: 60_000 } },
   { pattern: /^\/api\/matches/, name: "matches", limit: { max: 30, windowMs: 60_000 } },
+  // Cada palpite é uma requisição; nada chega à Deadlock API (o elenco fica em
+  // memória), então o limite só segura script tentando todos os heróis.
+  { pattern: /^\/api\/dle/, name: "dle", limit: { max: 60, windowMs: 60_000 } },
   { pattern: /^\/[a-z]{2}\/player\//, name: "player", limit: { max: 40, windowMs: 60_000 } },
 ];
 

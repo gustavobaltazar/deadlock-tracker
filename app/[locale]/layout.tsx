@@ -98,7 +98,15 @@ export default async function LocaleLayout({
                   <span className="text-accent">LOCK</span>
                 </span>
               </Link>
-              <LanguageSwitch />
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/${locale}/deadlockdle`}
+                  className="rounded-md border border-accent-dim/50 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent transition-colors hover:bg-accent/20"
+                >
+                  {dictionary.dle.nav}
+                </Link>
+                <LanguageSwitch />
+              </div>
             </div>
           </header>
 
