@@ -114,6 +114,21 @@ export default function BestMatch({
 
   const mvp = highlights.mvpRank;
 
+  // Quantidade que fecha as linhas da grade: 4 vira 2x2, 5 cai para 2x2 e 6
+  // ou mais vira 3x2 — nunca sobra uma linha pela metade. Como a lista vem
+  // do nível mais alto para o mais baixo, o corte tira os prêmios menores.
+  const earned = highlights.accolades.length;
+  const accolades = highlights.accolades.slice(
+    0,
+    earned >= 6 ? 6 : earned === 5 ? 4 : earned,
+  );
+  const accoladeCols =
+    accolades.length === 1
+      ? ""
+      : accolades.length % 3 === 0
+        ? "sm:grid-cols-3"
+        : "sm:grid-cols-2";
+
   return (
     <section
       className="relative overflow-hidden rounded-lg border bg-surface"
@@ -236,13 +251,13 @@ export default function BestMatch({
         </div>
 
         <div className="space-y-3 border-t border-border/70 px-3 py-3">
-            {highlights.accolades.length > 0 && (
+            {accolades.length > 0 && (
               <div>
                 <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-muted">
                   {t.best.accolades}
                 </h3>
-                <ul className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
-                  {highlights.accolades.slice(0, 6).map((a) => (
+                <ul className={"grid gap-1.5 " + accoladeCols}>
+                  {accolades.map((a) => (
                     <li
                       key={a.id}
                       className="flex items-center gap-2 rounded-md border border-border bg-bg/70 px-2 py-1"
