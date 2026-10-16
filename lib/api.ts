@@ -776,6 +776,242 @@ export async function getMatchItems(
   return result;
 }
 
+/**
+ * Melhor partida do histórico inteiro.
+ *
+ * Cada partida é comparada com a média do próprio jogador, e não com valores
+ * absolutos: 30 mil almas é muito para um suporte e pouco para um carry, e o
+ * que interessa é a partida em que ele jogou acima do próprio padrão. Entram
+ * três medidas, todas por minuto ou por morte para que uma partida longa não
+ * vença só por ter durado mais:
+ *   - almas por minuto (quanto farmou);
+ *   - KDA (quanto matou e participou sem morrer);
+ *   - abates + assistências por minuto (o quanto decidiu lutas).
+ * Cada razão tem teto de 3x: sem ele, um 8/0 viraria KDA 8 e decidiria sozinho.
+ * Vitória dá 10% de bônus — a melhor partida é, de preferência, uma que valeu.
+ *
+ * Ficam de fora Street Brawl (economia própria), modos que não são partida de
+ * verdade (bots, lobby privado, tutorial), partidas com abandono e as abaixo
+ * de 15 minutos, em que um stomp curto infla qualquer média.
+ */
+export function pickBestMatch(
+  matches: MatchHistoryEntry[],
+): MatchHistoryEntry | null {
+  const MIN_DURATION_S = 15 * 60;
+  const RATIO_CAP = 3;
+
+  const eligible = matches.filter(
+    (m) =>
+      m.game_mode === 1 &&
+      (m.match_mode === 1 || m.match_mode === 4) &&
+      m.match_duration_s >= MIN_DURATION_S &&
+      !m.team_abandoned &&
+      !m.abandoned_time_s,
+  );
+  if (eligible.length === 0) return null;
+
+  const measures = eligible.map((m) => {
+    const minutes = m.match_duration_s / 60;
+    return {
+      match: m,
+      soulsPerMin: m.net_worth / minutes,
+      kda: (m.player_kills + m.player_assists) / Math.max(1, m.player_deaths),
+      fightsPerMin: (m.player_kills + m.player_assists) / minutes,
+    };
+  });
+  const avg = (key: "soulsPerMin" | "kda" | "fightsPerMin") =>
+    measures.reduce((sum, x) => sum + x[key], 0) / measures.length || 1;
+  const avgSouls = avg("soulsPerMin");
+  const avgKda = avg("kda");
+  const avgFights = avg("fightsPerMin");
+  const ratio = (value: number, mean: number) =>
+    Math.min(RATIO_CAP, value / mean);
+
+  let best: { match: MatchHistoryEntry; score: number } | null = null;
+  for (const x of measures) {
+    const score =
+      (0.4 * ratio(x.soulsPerMin, avgSouls) +
+        0.35 * ratio(x.kda, avgKda) +
+        0.25 * ratio(x.fightsPerMin, avgFights)) *
+      (isWin(x.match) ? 1.1 : 1);
+    if (!best || score > best.score) best = { match: x.match, score };
+  }
+  return best?.match ?? null;
+}
+
+/** Estatísticas em que o jogo destaca quem foi o melhor da partida. */
+export const HIGHLIGHT_STATS = [
+  "kills",
+  "assists",
+  "netWorth",
+  "damage",
+  "healing",
+  "lastHits",
+] as const;
+export type HighlightStat = (typeof HIGHLIGHT_STATS)[number];
+
+export type EarnedAccolade = {
+  id: number;
+  /** Título do jogo, ex. "Killer Instinct" — nome próprio, não traduzido. */
+  name: string;
+  /** Texto do jogo já com o valor, ex. "12 kills". */
+  text: string;
+  /** Nível alcançado, de 1 a 3. */
+  tier: number;
+};
+
+export type MatchHighlights = {
+  /** 1 = MVP, 2 e 3 = Key Players; null quando o jogo não o premiou. */
+  mvpRank: number | null;
+  stats: Record<HighlightStat, number> & { deaths: number; denies: number };
+  /** Estatísticas em que o jogador foi o maior entre os 12 — a "estrela" do placar. */
+  top: HighlightStat[];
+  accolades: EarnedAccolade[];
+  items: ItemView[];
+};
+
+/**
+ * Catálogo de accolades (os prêmios de fim de partida). Pequeno (~10 KB), mas
+ * estável entre patches: cache de 24h.
+ */
+const getAccoladeMap = memoize(86400, async () => {
+  type RawAccolade = { id: number; flavor_name: string; description: string };
+  const raw = await get<RawAccolade[]>("/v1/assets/accolades", 86400);
+  return new Map(raw.map((a) => [a.id, a]));
+});
+
+/**
+ * Preenche o texto de um accolade. O jogo usa marcadores no formato ICU:
+ * `{g:citadel_thousands:stat_value}` é o número e
+ * `{stat_value, plural, one{kill} other{kills}}` escolhe singular ou plural.
+ */
+function accoladeText(template: string, value: number): string {
+  return template
+    .replace(/<[^>]+>/g, "")
+    .replace(/\{g:[^}]*stat_value\}/g, value.toLocaleString("en-US"))
+    .replace(
+      /\{stat_value,\s*plural,\s*one\{([^}]*)\}\s*other\{([^}]*)\}\}/g,
+      (_, one: string, other: string) => (value === 1 ? one : other),
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * MVP, accolades e destaques de uma partida, numa chamada em lote enxuta.
+ *
+ * A metadata completa (`/v1/matches/{id}/metadata`) pesa ~1,1 MB. Aqui pedimos
+ * só as colunas necessárias dos 12 jogadores — o placar inteiro é preciso para
+ * saber em que estatística o jogador foi o maior — e a resposta cai para
+ * ~30 KB. Dano e cura vêm como série temporal; o último ponto é o total.
+ * Devolve null se a partida ainda não tem metadata ou se a chamada falhar.
+ */
+export async function getMatchHighlights(
+  matchId: number,
+  accountId: number,
+  items: Map<number, ItemView>,
+): Promise<MatchHighlights | null> {
+  type RawPlayer = {
+    account_id: number;
+    kills?: number;
+    deaths?: number;
+    assists?: number;
+    net_worth?: number;
+    last_hits?: number;
+    denies?: number;
+    mvp_rank?: number | null;
+    stats_player_damage?: number[] | null;
+    stats_player_healing?: number[] | null;
+    accolades?: {
+      accolade_id: number;
+      accolade_stat_value: number;
+      accolade_threshold_achieved: number;
+    }[];
+    items?: { item_id: number; game_time_s: number; sold_time_s: number }[];
+  };
+
+  const query = new URLSearchParams({
+    match_ids: String(matchId),
+    include_player_kda: "true",
+    include_player_items: "true",
+    extra_player_columns:
+      "mvp_rank,accolades,net_worth,last_hits,denies,stats.player_damage,stats.player_healing",
+    limit: "1",
+  });
+
+  let rows: { players?: RawPlayer[] }[];
+  let catalog: Awaited<ReturnType<typeof getAccoladeMap>>;
+  try {
+    [rows, catalog] = await Promise.all([
+      // Partida encerrada não muda: cache longo.
+      get<{ players?: RawPlayer[] }[]>(
+        "/v1/matches/metadata?" + query.toString(),
+        86400,
+      ),
+      getAccoladeMap(),
+    ]);
+  } catch {
+    return null;
+  }
+
+  const players = rows[0]?.players ?? [];
+  const statsOf = (p: RawPlayer): MatchHighlights["stats"] => ({
+    kills: p.kills ?? 0,
+    deaths: p.deaths ?? 0,
+    assists: p.assists ?? 0,
+    netWorth: p.net_worth ?? 0,
+    damage: p.stats_player_damage?.at(-1) ?? 0,
+    healing: p.stats_player_healing?.at(-1) ?? 0,
+    lastHits: p.last_hits ?? 0,
+    denies: p.denies ?? 0,
+  });
+  const all = players.map((p) => ({ id: p.account_id, stats: statsOf(p) }));
+  const me = players.find((p) => p.account_id === accountId);
+  if (!me) return null;
+  const stats = statsOf(me);
+
+  // Empate no topo também ganha a estrela, como no placar do jogo; zero não.
+  const top = HIGHLIGHT_STATS.filter(
+    (key) =>
+      stats[key] > 0 && all.every((other) => other.stats[key] <= stats[key]),
+  );
+
+  // -1 = não alcançado; 0, 1 e 2 são os três níveis de cada prêmio.
+  const accolades = (me.accolades ?? [])
+    .filter((a) => a.accolade_threshold_achieved >= 0)
+    .map((a) => {
+      const info = catalog.get(a.accolade_id);
+      if (!info) return null;
+      return {
+        id: a.accolade_id,
+        name: info.flavor_name,
+        text: accoladeText(info.description, a.accolade_stat_value),
+        tier: a.accolade_threshold_achieved + 1,
+      };
+    })
+    .filter((a): a is EarnedAccolade => a !== null)
+    .sort((a, b) => b.tier - a.tier);
+
+  const seen = new Set<number>();
+  const build = (me.items ?? [])
+    .filter((e) => !e.sold_time_s)
+    .sort((a, b) => a.game_time_s - b.game_time_s)
+    .map((e) => items.get(e.item_id))
+    .filter((item): item is ItemView => {
+      if (!item || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+
+  return {
+    mvpRank: me.mvp_rank ?? null,
+    stats,
+    top,
+    accolades,
+    items: build,
+  };
+}
+
 /** Badge mínimo considerado "elo alto": 91 = Phantom 1 (tier*10 + subrank). */
 export const HIGH_SKILL_BADGE = 91;
 

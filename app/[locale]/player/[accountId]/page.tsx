@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import ActivityHeatmap, { type ActivityGame } from "@/components/ActivityHeatmap";
+import BestMatch from "@/components/BestMatch";
 import HeroStatsList from "@/components/HeroStatsList";
 import DataFreshness from "@/components/DataFreshness";
 import FrequentMates from "@/components/FrequentMates";
@@ -12,6 +13,7 @@ import {
   getHeroStats,
   getItemMap,
   getFrequentMates,
+  getMatchHighlights,
   getMatchItems,
   getRankAssets,
   getMatchHistory,
@@ -19,6 +21,7 @@ import {
   getRank,
   isWin,
   parseAccountId,
+  pickBestMatch,
   pickSignatureHero,
   toMatchViews,
 } from "@/lib/api";
@@ -89,12 +92,16 @@ export default async function PlayerPage({
   if (!profile && matches.length === 0) notFound();
 
   const recent = matches.slice(0, RECENT_COUNT);
-  // Uma única chamada em lote cobre as builds de todas as partidas exibidas.
-  const builds = await getMatchItems(
-    id,
-    recent.map((m) => m.match_id),
-    itemCatalog,
-  );
+  const best = pickBestMatch(matches);
+  const [builds, bestHighlights] = await Promise.all([
+    // Uma única chamada em lote cobre as builds de todas as partidas exibidas.
+    getMatchItems(
+      id,
+      recent.map((m) => m.match_id),
+      itemCatalog,
+    ),
+    best ? getMatchHighlights(best.match_id, id, itemCatalog) : null,
+  ]);
   const wins = recent.filter(isWin).length;
   const losses = recent.length - wins;
   const totals = recent.reduce(
@@ -203,23 +210,36 @@ export default async function PlayerPage({
           </section>
         </div>
 
-        {/* Coluna direita: histórico.
+        {/* Coluna direita: melhor partida e histórico.
             `min-w-0` é necessário: itens de grid nascem com `min-width: auto`, então a
             coluna 1fr não encolheria abaixo da largura do conteúdo e vazaria para
             fora do container, desalinhando com o cabeçalho do perfil. */}
-        <section className="min-w-0 rounded-lg border border-border bg-surface">
-          <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
-            {t.player.matchHistory}
-            <span className="ml-2 text-xs font-normal text-muted">
-              {fill(t.player.recorded, { n: matches.length })}
-            </span>
-          </h2>
-          <MatchList
-            accountId={id}
-            initialMatches={toMatchViews(recent, heroes, builds)}
-            total={matches.length}
-          />
-        </section>
+        <div className="min-w-0 space-y-5">
+          {best && (
+            <BestMatch
+              match={best}
+              highlights={bestHighlights}
+              hero={heroes.get(best.hero_id)}
+              total={matches.length}
+              locale={locale}
+              t={t}
+            />
+          )}
+
+          <section className="min-w-0 rounded-lg border border-border bg-surface">
+            <h2 className="border-b border-border px-3 py-2.5 text-sm font-bold">
+              {t.player.matchHistory}
+              <span className="ml-2 text-xs font-normal text-muted">
+                {fill(t.player.recorded, { n: matches.length })}
+              </span>
+            </h2>
+            <MatchList
+              accountId={id}
+              initialMatches={toMatchViews(recent, heroes, builds)}
+              total={matches.length}
+            />
+          </section>
+        </div>
       </div>
     </main>
   );
