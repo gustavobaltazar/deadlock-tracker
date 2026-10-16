@@ -101,8 +101,13 @@ export default async function LocaleLayout({
               <div className="flex items-center gap-3">
                 <Link
                   href={`/${locale}/deadlockdle`}
-                  className="rounded-md border border-accent-dim/50 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent transition-colors hover:bg-accent/20"
+                  className="flex items-center gap-2 rounded-md border border-souls/40 bg-souls/10 px-3 py-1.5 text-xs font-bold text-souls shadow-[0_0_14px_-4px_rgba(255,237,121,0.5)] transition-colors hover:bg-souls/20"
                 >
+                  {/* Pontinho pulsando: o jogo diário sempre tem algo novo. */}
+                  <span className="relative flex size-2" aria-hidden="true">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-souls opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-souls" />
+                  </span>
                   {dictionary.dle.nav}
                 </Link>
                 <LanguageSwitch />

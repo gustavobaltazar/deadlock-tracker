@@ -223,13 +223,14 @@ export function Countdown({ label, className }: { label: string; className?: str
   const total = Math.floor(left / 1000);
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <p className={className ?? "mt-3 text-xs text-muted"}>
+    // <span> em bloco, e não <p>: o contador também aparece dentro de links.
+    <span className={"block " + (className ?? "mt-3 text-xs text-muted")}>
       {label}{" "}
       <span className="font-bold tabular-nums text-ink">
         {pad(Math.floor(total / 3600))}:{pad(Math.floor((total % 3600) / 60))}:
         {pad(total % 60)}
       </span>
-    </p>
+    </span>
   );
 }
 

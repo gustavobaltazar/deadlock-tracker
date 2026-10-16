@@ -182,6 +182,12 @@ const en = {
       solved: "{n} of {total} modes solved today",
       newHeroes: "New heroes in",
     },
+    teaser: {
+      badge: "Daily game",
+      desc: "Guess today's Deadlock hero from clues or from their voice. A new hero every day.",
+      cta: "Play now",
+      seeResults: "See today's results",
+    },
     voice: {
       prompt: "Who says this?",
       play: "Play line",
@@ -430,6 +436,12 @@ const pt: Dictionary = {
       yesterday: "Ontem:",
       solved: "{n} de {total} modos resolvidos hoje",
       newHeroes: "Novos heróis em",
+    },
+    teaser: {
+      badge: "Jogo diário",
+      desc: "Adivinhe o herói do Deadlock de hoje pelas pistas ou pela voz dele. Um herói novo todo dia.",
+      cta: "Jogar agora",
+      seeResults: "Ver resultados de hoje",
     },
     voice: {
       prompt: "Quem diz isso?",

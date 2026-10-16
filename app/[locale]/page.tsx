@@ -1,6 +1,7 @@
 import Image from "next/image";
 import SearchBar from "@/components/SearchBar";
-import { CITY_BACKGROUND } from "@/lib/api";
+import DleTeaser from "@/components/dle/DleTeaser";
+import { CITY_BACKGROUND, getHeroMap } from "@/lib/api";
 import { getDictionary, isLocale } from "@/lib/i18n";
 
 export default async function HomePage({
@@ -33,7 +34,7 @@ export default async function HomePage({
       <main className="mx-auto flex max-w-[640px] flex-col items-center px-4 pt-24 pb-16 text-center sm:pt-32">
         <h1 className="text-4xl font-extrabold tracking-tight drop-shadow-lg sm:text-5xl">
           <span className="text-muted">SEARCH</span>
-                <span className="text-accent">LOCK</span>
+          <span className="text-accent">LOCK</span>
         </h1>
         <p className="mt-3 text-sm text-eggshell drop-shadow">{t.site.tagline}</p>
 
@@ -42,7 +43,26 @@ export default async function HomePage({
         </div>
 
         <p className="mt-4 text-xs text-muted drop-shadow">{t.search.hint}</p>
+
+        <DleTeaser silhouettes={await teaserSilhouettes()} />
       </main>
     </>
   );
+}
+
+/**
+ * Heróis das silhuetas do Deadlockdle: Lady Geist e Celeste, de contornos
+ * bem reconhecíveis e retratos com fundo transparente (o do Abrams vira um
+ * bloco ao ser pintado de preto, e o da Haze, uma mancha sem forma). Se o catálogo falhar, o cartão aparece sem elas — a home
+ * não pode depender da API para abrir.
+ */
+async function teaserSilhouettes(): Promise<string[]> {
+  try {
+    const heroes = await getHeroMap();
+    return [4, 81]
+      .map((id) => heroes.get(id)?.portrait)
+      .filter((src): src is string => Boolean(src));
+  } catch {
+    return [];
+  }
 }
