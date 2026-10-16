@@ -1,5 +1,6 @@
 import Image from "next/image";
-import type { Hero, PlayerHeroStats, SteamProfile } from "@/lib/api";
+import StarIcon from "./StarIcon";
+import type { Hero, MvpSummary, PlayerHeroStats, SteamProfile } from "@/lib/api";
 import { percent } from "@/lib/format";
 import { fill, type Dictionary, type Locale } from "@/lib/i18n";
 
@@ -19,6 +20,8 @@ export default function PlayerHeader({
   profile,
   signature,
   signatureHero,
+  mvps,
+  mvpHero,
   locale,
   t,
 }: {
@@ -26,6 +29,9 @@ export default function PlayerHeader({
   profile: SteamProfile | null;
   signature: PlayerHeroStats | null;
   signatureHero: Hero | undefined;
+  mvps: MvpSummary | null;
+  /** Herói com mais MVPs do jogador. */
+  mvpHero: Hero | undefined;
   locale: Locale;
   t: Dictionary;
 }) {
@@ -130,7 +136,82 @@ export default function PlayerHeader({
 
         </div>
 
+        {mvps && <MvpMedal mvps={mvps} hero={mvpHero} t={t} />}
       </div>
     </section>
+  );
+}
+
+/** Dourado das almas (gold_color), o mesmo dos destaques da melhor partida. */
+const GOLD = "#ffed79";
+
+/**
+ * Total de MVPs do jogador, em destaque no cabeçalho. Fica à esquerda do
+ * retrato do herói (que ocupa ~260px à direita a partir de `sm`) e desce para
+ * baixo do nome no celular.
+ */
+function MvpMedal({
+  mvps,
+  hero,
+  t,
+}: {
+  mvps: MvpSummary;
+  hero: Hero | undefined;
+  t: Dictionary;
+}) {
+  return (
+    <div
+      className="flex w-full cursor-help items-center gap-3 rounded-lg border bg-bg/85 px-3.5 py-2.5 backdrop-blur-sm sm:mr-[250px] sm:w-auto"
+      style={{
+        borderColor: `${GOLD}55`,
+        boxShadow: `0 0 24px -8px ${GOLD}55, inset 0 0 18px -10px ${GOLD}88`,
+      }}
+      title={fill(t.player.mvpSince, { n: mvps.rated })}
+    >
+      {/* Medalha: estrela sobre um disco dourado com brilho. */}
+      <div
+        className="grid size-12 shrink-0 place-items-center rounded-full"
+        style={{
+          background: `radial-gradient(circle at 35% 30%, ${GOLD}, #c6a269 60%, #92703c)`,
+          boxShadow: `0 0 14px ${GOLD}66`,
+        }}
+      >
+        <StarIcon className="size-7 text-bg drop-shadow-[0_1px_0_rgba(255,255,255,0.35)]" />
+      </div>
+
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-1.5">
+          <span
+            className="text-3xl font-extrabold leading-none tabular-nums"
+            style={{ color: GOLD, textShadow: `0 0 12px ${GOLD}55` }}
+          >
+            {mvps.mvp}
+          </span>
+          <span className="text-xs font-bold uppercase tracking-widest text-accent">
+            {t.player.mvps}
+          </span>
+        </div>
+        <div className="mt-1 text-[11px] text-eggshell">
+          {fill(t.player.mvpRate, { pct: percent(mvps.mvp, mvps.rated) })}
+          <span className="text-muted">
+            {" · "}
+            {fill(t.player.mvpKeyPlayer, { n: mvps.keyPlayer })}
+          </span>
+        </div>
+        {mvps.topHero && hero && (
+          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+            {t.player.mvpTopHero}
+            {hero.icon && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={hero.icon} alt="" className="size-4 rounded-sm" />
+            )}
+            <span className="font-semibold" style={{ color: hero.styleHex ?? undefined }}>
+              {hero.name}
+            </span>
+            <span className="tabular-nums">({mvps.topHero.count})</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

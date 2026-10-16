@@ -1,6 +1,7 @@
 import Image from "next/image";
 import ItemBuild from "./ItemBuild";
 import SoulIcon from "./SoulIcon";
+import StarIcon from "./StarIcon";
 import type {
   Hero,
   HighlightStat,
@@ -156,7 +157,7 @@ export default function BestMatch({
           style={{ borderColor: `${tint}44` }}
         >
           <span className="inline-flex items-center gap-1.5" style={{ color: GOLD }}>
-            <Star className="size-4" />
+            <StarIcon className="size-4" />
             {t.best.title}
           </span>
           <span
@@ -202,7 +203,7 @@ export default function BestMatch({
                   }
                   style={mvp === 1 ? { background: GOLD } : undefined}
                 >
-                  <Star className="size-3" />
+                  <StarIcon className="size-3" />
                   {mvp === 1 ? t.best.mvp : t.best.keyPlayer}
                 </span>
               )}
@@ -242,7 +243,7 @@ export default function BestMatch({
                     style={{ color: GOLD }}
                     title={t.best.topInMatch}
                   >
-                    <Star className="size-3.5 drop-shadow-[0_0_4px_rgba(255,237,121,0.6)]" />
+                    <StarIcon className="size-3.5 drop-shadow-[0_0_4px_rgba(255,237,121,0.6)]" />
                   </span>
                 )}
               </div>
@@ -287,20 +288,6 @@ export default function BestMatch({
   );
 }
 
-function Star({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="currentColor"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z" />
-    </svg>
-  );
-}
-
 /** Nível do accolade (1 a 3), em estrelas acesas e apagadas. */
 function Tier({ tier }: { tier: number }) {
   return (
@@ -310,7 +297,7 @@ function Tier({ tier }: { tier: number }) {
       aria-label={`${tier}/3`}
     >
       {[1, 2, 3].map((n) => (
-        <Star
+        <StarIcon
           key={n}
           className={"size-2.5 " + (n <= tier ? "" : "opacity-20")}
         />

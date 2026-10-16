@@ -65,7 +65,43 @@ export type PlayerHeroStats = {
   ending_level: number;
   networth_per_min: number;
   last_hits_per_min: number;
+  /** Partidas por posição no ranking de MVP: [MVP, 2º, 3º]. */
+  mvp_rank_counts?: number[] | null;
+  /** Partidas jogadas desde que a Valve passou a registrar MVP (06/01/2026). */
+  mvp_rated_matches?: number | null;
 };
+
+export type MvpSummary = {
+  mvp: number;
+  /** Vezes em 2º ou 3º — os "Key Players" do fim de partida. */
+  keyPlayer: number;
+  /** Base da taxa: só partidas com MVP registrado, não o histórico inteiro. */
+  rated: number;
+  /** Herói com mais MVPs, se houver algum. */
+  topHero: { heroId: number; count: number } | null;
+};
+
+/**
+ * Soma os MVPs de todos os heróis. A taxa usa `mvp_rated_matches` e não
+ * `matches_played`: partidas anteriores a 06/01/2026 não têm MVP registrado e
+ * puxariam a taxa para baixo sem motivo.
+ */
+export function summarizeMvps(stats: PlayerHeroStats[]): MvpSummary | null {
+  let mvp = 0;
+  let keyPlayer = 0;
+  let rated = 0;
+  let topHero: MvpSummary["topHero"] = null;
+  for (const s of stats) {
+    const [first = 0, second = 0, third = 0] = s.mvp_rank_counts ?? [];
+    mvp += first;
+    keyPlayer += second + third;
+    rated += s.mvp_rated_matches ?? 0;
+    if (first > 0 && (!topHero || first > topHero.count)) {
+      topHero = { heroId: s.hero_id, count: first };
+    }
+  }
+  return rated > 0 ? { mvp, keyPlayer, rated, topHero } : null;
+}
 
 export type Hero = {
   id: number;

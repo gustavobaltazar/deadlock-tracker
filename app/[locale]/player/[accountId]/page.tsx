@@ -22,6 +22,7 @@ import {
   isWin,
   parseAccountId,
   pickSignatureHero,
+  summarizeMvps,
   toMatchViews,
 } from "@/lib/api";
 import { kda, percent } from "@/lib/format";
@@ -112,6 +113,7 @@ export default async function PlayerPage({
     { k: 0, d: 0, a: 0 },
   );
   const signature = pickSignatureHero(heroStats);
+  const mvps = summarizeMvps(heroStats);
   const topHeroes = [...heroStats]
     .sort((a, b) => b.matches_played - a.matches_played)
     .slice(0, 8);
@@ -134,6 +136,8 @@ export default async function PlayerPage({
         profile={profile}
         signature={signature}
         signatureHero={signature ? heroes.get(signature.hero_id) : undefined}
+        mvps={mvps}
+        mvpHero={mvps?.topHero ? heroes.get(mvps.topHero.heroId) : undefined}
         locale={locale}
         t={t}
       />
