@@ -286,7 +286,8 @@ function Roulette({ heroes, hero, onDone }: { heroes: TowerHero[]; hero: TowerHe
       <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent">
         {landed ? t.tower.yourHero : t.tower.rolling}
       </p>
-      <div className="relative mx-auto mt-4 grid h-72 w-60 place-items-end overflow-hidden rounded-2xl border-2"
+      {/* Quadro na proporção da arte (280×380), para o retrato preencher sem sobra. */}
+      <div className="relative mx-auto mt-4 aspect-[280/380] w-60 overflow-hidden rounded-2xl border-2"
         style={{
           borderColor: landed ? hero.color : "rgba(198,162,105,0.5)",
           background: `radial-gradient(circle at 50% 70%, ${shown.color}55, #0b0d0a 75%)`,
@@ -299,7 +300,7 @@ function Roulette({ heroes, hero, onDone }: { heroes: TowerHero[]; hero: TowerHe
             key={landed ? "landed" : shown.id}
             src={shown.portrait}
             alt=""
-            className={"h-64 w-auto object-contain " + (landed ? "tower-landed" : "")}
+            className={"absolute inset-0 size-full object-cover object-bottom " + (landed ? "tower-landed" : "")}
           />
         )}
       </div>
