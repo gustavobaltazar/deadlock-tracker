@@ -153,6 +153,13 @@ function Player({ day, misses, won }: { day: string; misses: number; won: boolea
   const [clip, setClip] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [volume, setVolume] = useVolume();
+
+  // O <audio> é recriado a cada troca de fala (key={clip}), então o volume é
+  // reaplicado sempre que ele ou a fala mudam.
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume, clip]);
 
   const unlocked = (i: number) => won || misses >= CLIP_UNLOCK[i];
 
@@ -230,6 +237,8 @@ function Player({ day, misses, won }: { day: string; misses: number; won: boolea
       />
       {failed && <p className="relative mt-3 text-xs text-loss">{t.dle.voice.audioError}</p>}
 
+      <VolumeControl volume={volume} onChange={setVolume} />
+
       <div className="relative mt-5 flex justify-center gap-2">
         {CLIP_UNLOCK.map((need, i) => {
           const open = unlocked(i);
@@ -304,6 +313,87 @@ function HintBox({
           🔒 {fill(t.dle.voice.hintLocked, { n: UNLOCK.hint - misses })}
         </span>
       )}
+    </div>
+  );
+}
+
+/** Volume inicial: as falas vêm masterizadas alto, para o meio de uma partida. */
+const DEFAULT_VOLUME = 0.5;
+const VOLUME_KEY = "deadlockdle:volume";
+
+/** Volume das falas, lembrado entre visitas. */
+function useVolume(): [number, (v: number) => void] {
+  const [volume, setVolume] = useState(DEFAULT_VOLUME);
+
+  useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem(VOLUME_KEY));
+      if (localStorage.getItem(VOLUME_KEY) != null && saved >= 0 && saved <= 1) {
+        setVolume(saved);
+      }
+    } catch {
+      // Sem storage, fica o volume padrão.
+    }
+  }, []);
+
+  function change(v: number) {
+    setVolume(v);
+    try {
+      localStorage.setItem(VOLUME_KEY, String(v));
+    } catch {
+      // Sem storage o volume só não é lembrado.
+    }
+  }
+
+  return [volume, change];
+}
+
+function VolumeControl({
+  volume,
+  onChange,
+}: {
+  volume: number;
+  onChange: (v: number) => void;
+}) {
+  const { t } = useI18n();
+  // Volume antes de silenciar, para o botão de mudo devolver o mesmo nível.
+  const lastAudible = useRef(DEFAULT_VOLUME);
+  if (volume > 0) lastAudible.current = volume;
+  const muted = volume === 0;
+
+  return (
+    <div className="relative mx-auto mt-4 flex max-w-[240px] items-center gap-2.5">
+      <button
+        onClick={() => onChange(muted ? lastAudible.current : 0)}
+        aria-label={muted ? t.dle.voice.unmute : t.dle.voice.mute}
+        title={muted ? t.dle.voice.unmute : t.dle.voice.mute}
+        className="shrink-0 text-muted transition-colors hover:text-accent"
+      >
+        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" />
+          {muted ? (
+            <path d="m22 9-6 6m0-6 6 6" />
+          ) : (
+            <>
+              <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+              {volume > 0.5 && <path d="M18.5 5.5a9 9 0 0 1 0 13" />}
+            </>
+          )}
+        </svg>
+      </button>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={volume}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={t.dle.voice.volume}
+        className="h-1.5 flex-1 cursor-pointer accent-[#c6a269]"
+      />
+      <span className="w-9 shrink-0 text-right text-[11px] tabular-nums text-muted">
+        {Math.round(volume * 100)}%
+      </span>
     </div>
   );
 }

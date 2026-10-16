@@ -193,6 +193,9 @@ const en = {
       empty:
         "Listen to the line and guess which hero said it. Every 3 misses unlocks something new: another line, a text hint, a third line.",
       audioError: "Could not load the audio. Try again.",
+      volume: "Volume",
+      mute: "Mute",
+      unmute: "Unmute",
     },
   },
   build: {
@@ -439,6 +442,9 @@ const pt: Dictionary = {
       empty:
         "Ouça a fala e chute qual herói disse. A cada 3 erros, algo novo é liberado: outra fala, uma dica em texto, uma terceira fala.",
       audioError: "Não foi possível carregar o áudio. Tente de novo.",
+      volume: "Volume",
+      mute: "Silenciar",
+      unmute: "Ativar som",
     },
   },
   build: {
