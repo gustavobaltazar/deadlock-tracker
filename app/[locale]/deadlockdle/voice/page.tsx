@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import VoiceGame from "@/components/dle/VoiceGame";
-import { dleDay } from "@/lib/dle";
-import { heroOptions, heroPortraits, option, previousDay } from "@/lib/dle-page";
+import { gameDay, heroOptions, heroPortraits } from "@/lib/dle-page";
 import { voiceOfDay } from "@/lib/dle-voice";
 import { getDictionary, isLocale } from "@/lib/i18n";
 
@@ -18,19 +17,21 @@ export async function generateMetadata({
   };
 }
 
-export default async function VoicePage() {
-  const day = dleDay();
-  const [today, yesterday] = await Promise.all([
-    voiceOfDay(day),
-    voiceOfDay(previousDay(day)),
-  ]);
+export default async function VoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ day?: string | string[] }>;
+}) {
+  const { day, archive } = await gameDay(searchParams);
+  const game = await voiceOfDay(day);
 
   return (
     <VoiceGame
+      key={day}
       day={day}
-      heroes={heroOptions(today.pool)}
-      portraits={heroPortraits(today.pool)}
-      yesterday={option(yesterday.hero)}
+      heroes={heroOptions(game.pool)}
+      portraits={heroPortraits(game.pool)}
+      archive={archive}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dleDay } from "@/lib/dle";
+import { isPlayableDay } from "@/lib/dle";
 import { voiceOfDay } from "@/lib/dle-voice";
 import { cdnCache, NO_STORE } from "@/lib/http";
 
@@ -10,7 +10,7 @@ import { cdnCache, NO_STORE } from "@/lib/http";
  */
 export async function GET(request: Request) {
   const day = new URL(request.url).searchParams.get("day") ?? "";
-  if (day !== dleDay()) {
+  if (!isPlayableDay(day)) {
     return NextResponse.json({ error: "stale_day" }, { status: 409, headers: NO_STORE });
   }
   try {

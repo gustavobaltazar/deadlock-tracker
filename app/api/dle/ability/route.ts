@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dleDay } from "@/lib/dle";
+import { isPlayableDay } from "@/lib/dle";
 import { abilityOfDay } from "@/lib/dle-ability";
 import { cdnCache, NO_STORE } from "@/lib/http";
 
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const day = params.get("day") ?? "";
   const pick = Number(params.get("pick"));
 
-  if (day !== dleDay()) {
+  if (!isPlayableDay(day)) {
     return NextResponse.json({ error: "stale_day" }, { status: 409, headers: NO_STORE });
   }
   if (!Number.isInteger(pick) || pick < 0 || pick > 3) {

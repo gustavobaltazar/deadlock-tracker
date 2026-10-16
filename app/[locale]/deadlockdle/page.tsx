@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import DleHub from "@/components/dle/DleHub";
-import { dleDay, getDlePool, heroOfDay } from "@/lib/dle";
-import { option, previousDay } from "@/lib/dle-page";
-import { abilityOfDay } from "@/lib/dle-ability";
-import { voiceOfDay } from "@/lib/dle-voice";
+import { dleDay, previousDay } from "@/lib/dle";
 import { getDictionary, isLocale } from "@/lib/i18n";
 
 export async function generateMetadata({
@@ -23,23 +20,8 @@ export async function generateMetadata({
   };
 }
 
-/** Menu do Deadlockdle, com o andamento de cada modo e os heróis de ontem. */
+/** Menu do Deadlockdle, com o andamento de cada modo hoje e ontem. */
 export default async function DeadlockdleHubPage() {
-  const yesterday = previousDay(dleDay());
-  const [pool, voice, ability] = await Promise.all([
-    getDlePool(),
-    voiceOfDay(yesterday),
-    abilityOfDay(yesterday),
-  ]);
-
-  return (
-    <DleHub
-      day={dleDay()}
-      yesterday={{
-        classic: option(heroOfDay(pool, yesterday)),
-        voice: option(voice.hero),
-        ability: option(ability.hero),
-      }}
-    />
-  );
+  const day = dleDay();
+  return <DleHub day={day} yesterday={previousDay(day)} />;
 }

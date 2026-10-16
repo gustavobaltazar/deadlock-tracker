@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "../I18nProvider";
 import {
+  ArchiveBanner,
+  DaySwitch,
   GuessList,
   HeroPicker,
   WinCard,
-  Yesterday,
   useDelayedWin,
   useProgress,
   type DleOption,
@@ -25,12 +26,12 @@ const CLIP_UNLOCK = [0, UNLOCK.clip2, UNLOCK.clip3];
 export default function VoiceGame({
   day,
   heroes,
-  yesterday,
+  archive,
   portraits,
 }: {
   day: string;
   heroes: DleOption[];
-  yesterday: DleOption | null;
+  archive: boolean;
   portraits: Record<number, { portrait: string | null; color: string | null }>;
 }) {
   const { t } = useI18n();
@@ -90,12 +91,15 @@ export default function VoiceGame({
 
   return (
     <div className="space-y-5">
+      {archive && <ArchiveBanner day={day} mode="voice" />}
       <Player day={day} misses={misses} won={won} />
 
       <HintBox open={hintOpen} hint={hint} misses={misses} />
 
       {showWin && answer ? (
         <WinCard
+
+          archive={archive}
           name={answer.name}
           tries={rows.length}
           art={portraits[answer.heroId]}
@@ -117,7 +121,7 @@ export default function VoiceGame({
         <GuessList rows={rows} fresh={fresh} />
       )}
 
-      <Yesterday hero={yesterday} />
+      <DaySwitch mode="voice" day={day} archive={archive} />
     </div>
   );
 }

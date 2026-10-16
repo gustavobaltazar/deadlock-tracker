@@ -103,6 +103,20 @@ export function dleDay(date = new Date()): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** Dia anterior ao do jogo, "AAAA-MM-DD". */
+export function previousDay(day: string): string {
+  return dleDay(new Date(Date.parse(day + "T00:00:00Z") - 86_400_000));
+}
+
+/**
+ * Dias que aceitam palpites: hoje e ontem, para quem perdeu o desafio do dia
+ * anterior. Mais para trás, não — o desafio de ontem já é a "segunda chance".
+ */
+export function isPlayableDay(day: string): boolean {
+  const today = dleDay();
+  return day === today || day === previousDay(today);
+}
+
 /** Semente de cada modo. A do clássico não pode mudar: mudaria o herói do dia. */
 export const DLE_SALT = { classic: 0x5ea4c, voice: 0x7f3a1, ability: 0x3b9d7 } as const;
 

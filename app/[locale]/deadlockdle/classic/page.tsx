@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import ClassicGame from "@/components/dle/ClassicGame";
-import { dleDay, getDlePool, heroOfDay } from "@/lib/dle";
-import { heroOptions, heroPortraits, option, previousDay } from "@/lib/dle-page";
+import { getDlePool } from "@/lib/dle";
+import { gameDay, heroOptions, heroPortraits } from "@/lib/dle-page";
 import { getDictionary, isLocale } from "@/lib/i18n";
 
 export async function generateMetadata({
@@ -17,16 +17,21 @@ export async function generateMetadata({
   };
 }
 
-export default async function ClassicPage() {
-  const day = dleDay();
+export default async function ClassicPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ day?: string | string[] }>;
+}) {
+  const { day, archive } = await gameDay(searchParams);
   const pool = await getDlePool();
 
   return (
     <ClassicGame
+      key={day}
       day={day}
       heroes={heroOptions(pool)}
       portraits={heroPortraits(pool)}
-      yesterday={option(heroOfDay(pool, previousDay(day)))}
+      archive={archive}
     />
   );
 }

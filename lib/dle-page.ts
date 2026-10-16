@@ -1,6 +1,8 @@
 /** Dados que as páginas do Deadlockdle mandam ao navegador. */
 import type { DleHero } from "./dle";
-import { dleDay } from "./dle";
+import { dleDay, previousDay } from "./dle";
+
+export { previousDay };
 
 export type DleOptionData = { id: number; name: string; icon: string | null };
 
@@ -25,7 +27,14 @@ export function option(hero: DleHero): DleOptionData {
   return { id: hero.id, name: hero.name, icon: hero.icon };
 }
 
-/** Dia anterior ao do jogo, "AAAA-MM-DD". */
-export function previousDay(day: string): string {
-  return dleDay(new Date(Date.parse(day + "T00:00:00Z") - 86_400_000));
+/**
+ * Dia que a página do modo vai jogar: hoje, ou ontem com `?day=yesterday`.
+ * O dia de verdade vai junto, porque é a chave do progresso e da resposta.
+ */
+export async function gameDay(
+  searchParams: Promise<{ day?: string | string[] }>,
+): Promise<{ day: string; archive: boolean }> {
+  const archive = (await searchParams).day === "yesterday";
+  const today = dleDay();
+  return { day: archive ? previousDay(today) : today, archive };
 }

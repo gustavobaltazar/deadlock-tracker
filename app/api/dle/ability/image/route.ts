@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dleDay } from "@/lib/dle";
+import { isPlayableDay } from "@/lib/dle";
 import { ABILITY_STRAIGHT, renderAbility } from "@/lib/dle-ability";
 import { NO_STORE } from "@/lib/http";
 
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const day = params.get("day") ?? "";
   const stage = Number(params.get("stage"));
 
-  if (day !== dleDay() || !Number.isInteger(stage) || stage < 0 || stage > ABILITY_STRAIGHT) {
+  if (!isPlayableDay(day) || !Number.isInteger(stage) || stage < 0 || stage > ABILITY_STRAIGHT) {
     return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });
   }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorCode } from "@/lib/api";
-import { compareHeroes, dleDay, getDlePool, heroOfDay } from "@/lib/dle";
+import { compareHeroes, getDlePool, heroOfDay, isPlayableDay } from "@/lib/dle";
 import { abilityOfDay } from "@/lib/dle-ability";
 import { voiceOfDay } from "@/lib/dle-voice";
 import { cdnCache, NO_STORE } from "@/lib/http";
@@ -10,7 +10,7 @@ import { cdnCache, NO_STORE } from "@/lib/http";
  *
  * O dia vem na URL, e não só do relógio do servidor, para a resposta poder
  * ficar na CDN: a mesma combinação modo + dia + herói dá sempre a mesma
- * resposta. Só o dia corrente é aceito — o cliente recarrega quando a data vira.
+ * resposta. Só hoje e ontem são aceitos — o cliente recarrega quando a data vira.
  *
  * - `mode=classic` (padrão): linha com os atributos comparados.
  * - `mode=voice`: só acertou ou não, como no modo Quote do Loldle.
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const heroId = Number(params.get("hero"));
   const mode = params.get("mode") ?? "classic";
 
-  if (day !== dleDay()) {
+  if (!isPlayableDay(day)) {
     return NextResponse.json({ error: "stale_day" }, { status: 409, headers: NO_STORE });
   }
   if (mode !== "classic" && mode !== "voice" && mode !== "ability") {

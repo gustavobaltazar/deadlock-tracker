@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dleDay } from "@/lib/dle";
+import { isPlayableDay } from "@/lib/dle";
 import { VOICE_CLIPS, voiceOfDay } from "@/lib/dle-voice";
 import { NO_STORE } from "@/lib/http";
 
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const day = params.get("day") ?? "";
   const clip = Number(params.get("clip"));
 
-  if (day !== dleDay() || !Number.isInteger(clip) || clip < 0 || clip >= VOICE_CLIPS) {
+  if (!isPlayableDay(day) || !Number.isInteger(clip) || clip < 0 || clip >= VOICE_CLIPS) {
     return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });
   }
 

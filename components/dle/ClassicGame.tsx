@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "../I18nProvider";
 import StarIcon from "../StarIcon";
 import {
+  ArchiveBanner,
+  DaySwitch,
   HeroPicker,
   WinCard,
-  Yesterday,
   useDelayedWin,
   useProgress,
   type DleOption,
@@ -40,12 +41,12 @@ const FLIP_STEP_MS = 220;
 export default function ClassicGame({
   day,
   heroes,
-  yesterday,
+  archive,
   portraits,
 }: {
   day: string;
   heroes: DleOption[];
-  yesterday: DleOption | null;
+  archive: boolean;
   /** Retrato e cor de cada herói, para o cartão de vitória. */
   portraits: Record<number, { portrait: string | null; color: string | null }>;
 }) {
@@ -115,8 +116,11 @@ export default function ClassicGame({
 
   return (
     <div className="space-y-5">
+      {archive && <ArchiveBanner day={day} mode="classic" />}
       {showWin && answer ? (
         <WinCard
+
+          archive={archive}
           name={answer.name}
           tries={rows.length}
           art={portraits[answer.heroId]}
@@ -144,7 +148,7 @@ export default function ClassicGame({
       )}
 
       <Legend t={t} />
-      <Yesterday hero={yesterday} />
+      <DaySwitch mode="classic" day={day} archive={archive} />
     </div>
   );
 }

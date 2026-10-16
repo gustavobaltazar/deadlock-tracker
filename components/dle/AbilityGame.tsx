@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "../I18nProvider";
 import {
+  ArchiveBanner,
+  DaySwitch,
   GuessList,
   HeroPicker,
   WinCard,
-  Yesterday,
   useDelayedWin,
   useProgress,
   type DleOption,
@@ -29,12 +30,12 @@ type Bonus = { pick: number; answer: number };
 export default function AbilityGame({
   day,
   heroes,
-  yesterday,
+  archive,
   portraits,
 }: {
   day: string;
   heroes: DleOption[];
-  yesterday: DleOption | null;
+  archive: boolean;
   portraits: Record<number, { portrait: string | null; color: string | null }>;
 }) {
   const { t } = useI18n();
@@ -89,6 +90,7 @@ export default function AbilityGame({
 
   return (
     <div className="space-y-5">
+      {archive && <ArchiveBanner day={day} mode="ability" />}
       <Viewer day={day} stage={stage} misses={misses} won={won} />
 
       {showWin && answer ? (
@@ -105,6 +107,8 @@ export default function AbilityGame({
           {/* O cartão de vitória espera o bônus: ele é parte do resultado. */}
           {(bonus || !answer.abilities) && (
             <WinCard
+
+              archive={archive}
               name={answer.name}
               tries={rows.length}
               art={portraits[answer.heroId]}
@@ -128,7 +132,7 @@ export default function AbilityGame({
         <GuessList rows={rows} fresh={fresh} />
       )}
 
-      <Yesterday hero={yesterday} />
+      <DaySwitch mode="ability" day={day} archive={archive} />
     </div>
   );
 }

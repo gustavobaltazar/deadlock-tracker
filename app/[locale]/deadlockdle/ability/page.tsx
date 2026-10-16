@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import AbilityGame from "@/components/dle/AbilityGame";
-import { dleDay } from "@/lib/dle";
 import { abilityOfDay } from "@/lib/dle-ability";
-import { heroOptions, heroPortraits, option, previousDay } from "@/lib/dle-page";
+import { gameDay, heroOptions, heroPortraits } from "@/lib/dle-page";
 import { getDictionary, isLocale } from "@/lib/i18n";
 
 export async function generateMetadata({
@@ -18,19 +17,21 @@ export async function generateMetadata({
   };
 }
 
-export default async function AbilityPage() {
-  const day = dleDay();
-  const [today, yesterday] = await Promise.all([
-    abilityOfDay(day),
-    abilityOfDay(previousDay(day)),
-  ]);
+export default async function AbilityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ day?: string | string[] }>;
+}) {
+  const { day, archive } = await gameDay(searchParams);
+  const game = await abilityOfDay(day);
 
   return (
     <AbilityGame
+      key={day}
       day={day}
-      heroes={heroOptions(today.pool)}
-      portraits={heroPortraits(today.pool)}
-      yesterday={option(yesterday.hero)}
+      heroes={heroOptions(game.pool)}
+      portraits={heroPortraits(game.pool)}
+      archive={archive}
     />
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useI18n } from "../I18nProvider";
 import { fill } from "@/lib/i18n";
@@ -255,7 +256,9 @@ export function WinCard({
   tries,
   art,
   shareText,
+  archive = false,
 }: {
+  archive?: boolean;
   name: string;
   tries: number;
   art: { portrait: string | null; color: string | null } | undefined;
@@ -290,7 +293,7 @@ export function WinCard({
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-extrabold text-win">{t.dle.winTitle}</h2>
           <p className="mt-1 text-sm text-eggshell">
-            {fill(t.dle.winBody, {
+            {fill(archive ? t.dle.winBodyYesterday : t.dle.winBody, {
               hero: name,
               n: tries,
               tries: tries === 1 ? t.dle.tryOne : t.dle.tryMany,
@@ -346,18 +349,91 @@ export function GuessList({ rows, fresh }: { rows: GuessBase[]; fresh: number | 
   );
 }
 
-/** Herói de ontem no rodapé de cada modo. */
-export function Yesterday({ hero }: { hero: DleOption | null }) {
-  const { t } = useI18n();
-  if (!hero) return null;
+/** Data do jogo por extenso curto ("15/10" ou "10/15"), no fuso UTC do jogo. */
+function shortDate(day: string, locale: string) {
+  return new Date(day + "T00:00:00Z").toLocaleDateString(locale === "pt" ? "pt-BR" : "en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "UTC",
+  });
+}
+
+/** Faixa no topo do desafio de ontem, para ninguém confundir com o de hoje. */
+export function ArchiveBanner({ day, mode }: { day: string; mode: DleMode }) {
+  const { locale, t } = useI18n();
   return (
-    <p className="flex items-center justify-center gap-2 text-xs text-muted">
-      {t.dle.yesterday}
-      {hero.icon && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={hero.icon} alt="" className="size-5 rounded-sm" />
-      )}
-      <span className="font-bold text-ink">{hero.name}</span>
-    </p>
+    <div className="mx-auto flex max-w-[520px] flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-lg border border-[#b48cff]/50 bg-[#b48cff]/10 px-4 py-2 text-xs">
+      <span className="font-bold uppercase tracking-widest text-[#cdb4ff]">
+        ↺ {t.dle.archive.badge} · {shortDate(day, locale)}
+      </span>
+      <Link
+        href={`/${locale}/deadlockdle/${mode}`}
+        className="font-semibold text-muted underline-offset-2 hover:text-ink hover:underline"
+      >
+        {t.dle.archive.back} →
+      </Link>
+    </div>
   );
+}
+
+/**
+ * Rodapé de cada modo: no desafio de hoje, o convite para jogar o de ontem
+ * (ou o selo de que ele já foi resolvido); no de ontem, a volta para hoje.
+ */
+export function DaySwitch({
+  mode,
+  day,
+  archive,
+}: {
+  mode: DleMode;
+  day: string;
+  archive: boolean;
+}) {
+  const { locale, t } = useI18n();
+  const [solved, setSolved] = useState(false);
+  const yesterday = previousDay(day);
+
+  useEffect(() => {
+    if (archive) return;
+    setSolved(readProgress<GuessBase>(mode, yesterday).some((r) => r.correct));
+  }, [archive, mode, yesterday]);
+
+  const base = `/${locale}/deadlockdle/${mode}`;
+  if (archive) {
+    return (
+      <p className="text-center">
+        <Link href={base} className="text-xs font-semibold text-muted hover:text-ink">
+          ← {t.dle.archive.back}
+        </Link>
+      </p>
+    );
+  }
+
+  return (
+    <Link
+      href={`${base}?day=yesterday`}
+      className="group mx-auto flex max-w-[420px] items-center gap-3 rounded-lg border border-dashed border-border px-4 py-3 transition-colors hover:border-[#b48cff]/70 hover:bg-[#b48cff]/5"
+    >
+      <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[#b48cff]/50 text-lg text-[#cdb4ff]">
+        ↺
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold">
+          {solved ? t.dle.archive.solved : t.dle.archive.play}
+          {solved && <span className="ml-1.5 text-win">✓</span>}
+        </span>
+        <span className="block text-xs text-muted">
+          {solved ? t.dle.archive.review : t.dle.archive.playDesc}
+        </span>
+      </span>
+      <span className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-ink">
+        →
+      </span>
+    </Link>
+  );
+}
+
+/** Dia anterior, "AAAA-MM-DD" (cópia do lib/dle, que não entra no navegador). */
+export function previousDay(day: string): string {
+  return new Date(Date.parse(day + "T00:00:00Z") - 86_400_000).toISOString().slice(0, 10);
 }

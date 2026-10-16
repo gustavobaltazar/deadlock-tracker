@@ -4,38 +4,37 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useI18n } from "../I18nProvider";
 import ModeIcon from "./ModeIcon";
-import {
-  Countdown,
-  readProgress,
-  type DleMode,
-  type DleOption,
-  type GuessBase,
-} from "./shared";
+import { Countdown, DLE_MODES, readProgress, type DleMode, type GuessBase } from "./shared";
 import { fill } from "@/lib/i18n";
 
 type Progress = { tries: number; won: boolean };
 
 /**
  * Menu do Deadlockdle: um cartão por modo, com o andamento de hoje lido do
- * navegador — "resolvido em 4", "3 tentativas até agora" ou só "Jogar".
+ * navegador — "resolvido em 4", "3 tentativas até agora" ou só "Jogar". Embaixo,
+ * atalhos para os desafios de ontem, para quem perdeu algum.
  */
 export default function DleHub({
   day,
   yesterday,
 }: {
   day: string;
-  yesterday: Record<DleMode, DleOption | null>;
+  yesterday: string;
 }) {
   const { locale, t } = useI18n();
   const [progress, setProgress] = useState<Partial<Record<DleMode, Progress>>>({});
+  const [past, setPast] = useState<Partial<Record<DleMode, Progress>>>({});
 
   useEffect(() => {
-    const read = (mode: DleMode): Progress => {
-      const rows = readProgress<GuessBase>(mode, day);
+    const read = (mode: DleMode, d: string): Progress => {
+      const rows = readProgress<GuessBase>(mode, d);
       return { tries: rows.length, won: rows.some((r) => r.correct) };
     };
-    setProgress({ classic: read("classic"), voice: read("voice"), ability: read("ability") });
-  }, [day]);
+    const all = (d: string) =>
+      Object.fromEntries(DLE_MODES.map((m) => [m, read(m, d)])) as Record<DleMode, Progress>;
+    setProgress(all(day));
+    setPast(all(yesterday));
+  }, [day, yesterday]);
 
   const tries = (n: number) => (n === 1 ? t.dle.tryOne : t.dle.tryMany);
   const modes: { mode: DleMode; accent: string }[] = [
@@ -77,16 +76,6 @@ export default function DleHub({
                 {t.dle.modes[mode].title}
               </span>
               <span className="block text-xs text-muted">{t.dle.modes[mode].desc}</span>
-              {yesterday[mode] && (
-                <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
-                  {t.dle.hub.yesterday}
-                  {yesterday[mode]!.icon && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={yesterday[mode]!.icon!} alt="" className="size-4 rounded-sm" />
-                  )}
-                  <span className="font-semibold text-eggshell">{yesterday[mode]!.name}</span>
-                </span>
-              )}
             </span>
             <span className="relative shrink-0 text-right">
               {p?.won ? (
@@ -105,6 +94,31 @@ export default function DleHub({
           </Link>
         );
       })}
+
+      {/* Desafios de ontem: segunda chance para quem perdeu algum. */}
+      <div className="pt-4">
+        <p className="mb-2 text-center text-[11px] font-bold uppercase tracking-widest text-muted">
+          ↺ {t.dle.hub.yesterdayTitle}
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {modes.map(({ mode, accent }) => {
+            const p = past[mode];
+            return (
+              <Link
+                key={mode}
+                href={`/${locale}/deadlockdle/${mode}?day=yesterday`}
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-2 py-2.5 text-xs font-semibold text-eggshell transition-colors hover:border-accent-dim hover:text-ink"
+              >
+                <span style={{ color: accent }}>
+                  <ModeIcon mode={mode} className="size-4" />
+                </span>
+                {t.dle.modes[mode].title}
+                {p?.won && <span className="text-win">✓</span>}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="pt-3 text-center">
         <p className="text-xs text-muted">
