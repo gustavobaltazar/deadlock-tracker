@@ -123,7 +123,7 @@ const en = {
   },
   dle: {
     nav: "Deadlockdle",
-    tagline: "Guess today's Deadlock hero",
+    tagline: "Daily Deadlock hero guessing games",
     placeholder: "Type a hero name…",
     noMatch: "No hero found.",
     guess: "Guess",
@@ -159,6 +159,41 @@ const en = {
       "Release is the first month the hero shows up in matches. Match data starts in August 2024, so the original roster shows that month.",
     error: "Could not check that guess. Try again.",
     newDay: "A new hero is out. Loading the new game…",
+    modes: {
+      classic: {
+        title: "Classic",
+        desc: "Guess the hero with clues on every try",
+      },
+      voice: {
+        title: "Voice",
+        desc: "Who said that? Guess from a voice line",
+      },
+      ability: {
+        title: "Ability",
+        desc: "Guess the hero from an ability icon",
+      },
+    },
+    hub: {
+      play: "Play",
+      done: "Solved in {n} {tries}",
+      inProgress: "{n} {tries} so far",
+      soon: "Soon",
+      yesterday: "Yesterday:",
+      solved: "{n} of {total} modes solved today",
+      newHeroes: "New heroes in",
+    },
+    voice: {
+      prompt: "Who says this?",
+      play: "Play line",
+      pause: "Pause",
+      clip: "Line {n}",
+      unlockIn: "in {n} misses",
+      hintTitle: "Hint",
+      hintLocked: "unlocks in {n} misses",
+      empty:
+        "Listen to the line and guess which hero said it. Every 3 misses unlocks something new: another line, a text hint, a third line.",
+      audioError: "Could not load the audio. Try again.",
+    },
   },
   build: {
     adherence: "adherence",
@@ -334,7 +369,7 @@ const pt: Dictionary = {
   },
   dle: {
     nav: "Deadlockdle",
-    tagline: "Adivinhe o herói do Deadlock de hoje",
+    tagline: "Jogos diários de adivinhar heróis do Deadlock",
     placeholder: "Digite o nome de um herói…",
     noMatch: "Nenhum herói encontrado.",
     guess: "Chutar",
@@ -370,6 +405,41 @@ const pt: Dictionary = {
       "Lançamento é o primeiro mês em que o herói aparece nas partidas. Os dados começam em agosto de 2024, então o elenco original aparece nesse mês.",
     error: "Não foi possível conferir o palpite. Tente de novo.",
     newDay: "Saiu um herói novo. Carregando o jogo de hoje…",
+    modes: {
+      classic: {
+        title: "Clássico",
+        desc: "Adivinhe o herói com pistas a cada tentativa",
+      },
+      voice: {
+        title: "Voz",
+        desc: "Quem falou isso? Adivinhe pela fala do herói",
+      },
+      ability: {
+        title: "Habilidade",
+        desc: "Adivinhe o herói pelo ícone de uma habilidade",
+      },
+    },
+    hub: {
+      play: "Jogar",
+      done: "Resolvido em {n} {tries}",
+      inProgress: "{n} {tries} até agora",
+      soon: "Em breve",
+      yesterday: "Ontem:",
+      solved: "{n} de {total} modos resolvidos hoje",
+      newHeroes: "Novos heróis em",
+    },
+    voice: {
+      prompt: "Quem diz isso?",
+      play: "Tocar fala",
+      pause: "Pausar",
+      clip: "Fala {n}",
+      unlockIn: "em {n} erros",
+      hintTitle: "Dica",
+      hintLocked: "libera em {n} erros",
+      empty:
+        "Ouça a fala e chute qual herói disse. A cada 3 erros, algo novo é liberado: outra fala, uma dica em texto, uma terceira fala.",
+      audioError: "Não foi possível carregar o áudio. Tente de novo.",
+    },
   },
   build: {
     adherence: "aderência",

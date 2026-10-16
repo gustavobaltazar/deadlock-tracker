@@ -103,8 +103,11 @@ export function dleDay(date = new Date()): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** Semente de cada modo. A do clássico não pode mudar: mudaria o herói do dia. */
+export const DLE_SALT = { classic: 0x5ea4c, voice: 0x7f3a1 } as const;
+
 /** Gerador pseudoaleatório determinístico (mulberry32). */
-function seeded(seed: number) {
+export function seeded(seed: number) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -121,12 +124,17 @@ function seeded(seed: number) {
  * Os dias são agrupados em ciclos do tamanho do elenco, e cada ciclo usa uma
  * ordem embaralhada dos heróis: assim nenhum herói se repete antes de todos os
  * outros terem saído, o que um sorteio independente por dia não garantiria.
+ * Cada modo usa um `salt` próprio, para os heróis do dia não coincidirem.
  */
-export function heroOfDay(pool: DleHero[], day: string): DleHero {
+export function heroOfDay(
+  pool: DleHero[],
+  day: string,
+  salt: number = DLE_SALT.classic,
+): DleHero {
   const dayNumber = Math.floor(Date.parse(day + "T00:00:00Z") / 86_400_000);
   const cycle = Math.floor(dayNumber / pool.length);
   const order = [...pool];
-  const random = seeded(cycle * 2654435761 + 0x5ea4c);
+  const random = seeded(cycle * 2654435761 + salt);
   for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];

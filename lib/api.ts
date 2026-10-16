@@ -131,6 +131,10 @@ export type HeroTraits = {
   complexity: number;
   /** Vida base no nível 1. */
   health: number;
+  /** Nome interno do herói ("atlas" = Abrams), usado nas pastas de áudio. */
+  codename: string;
+  /** Resumo oficial do papel do herói, ex. "Sneaks in and sprays bullets". */
+  blurb: string;
 };
 
 /** Partida já enriquecida com os dados do herói, pronta para o cliente. */
@@ -552,6 +556,8 @@ export const getHeroMap = memoize(86400, async (): Promise<Map<number, Hero>> =>
     gun_tag?: string | null;
     tags?: string[] | null;
     complexity?: number | null;
+    class_name?: string | null;
+    description?: { role?: string | null } | null;
     starting_stats?: { max_health?: { value?: number } };
   };
   const raw = await get<RawHero[]>("/v1/assets/heroes", "no-store");
@@ -577,6 +583,8 @@ export const getHeroMap = memoize(86400, async (): Promise<Map<number, Hero>> =>
         tags: h.tags ?? [],
         complexity: h.complexity ?? 0,
         health: h.starting_stats?.max_health?.value ?? 0,
+        codename: (h.class_name ?? "").replace(/^hero_/, ""),
+        blurb: h.description?.role ?? "",
       },
     });
   }

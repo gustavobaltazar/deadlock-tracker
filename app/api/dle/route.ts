@@ -1,25 +1,48 @@
 import { NextResponse } from "next/server";
 import { errorCode } from "@/lib/api";
 import { compareHeroes, dleDay, getDlePool, heroOfDay } from "@/lib/dle";
+import { voiceOfDay } from "@/lib/dle-voice";
 import { cdnCache, NO_STORE } from "@/lib/http";
 
 /**
- * Confere um palpite do Deadlockdle contra o herói do dia.
+ * Confere um palpite do Deadlockdle contra o herói do dia do modo pedido.
  *
  * O dia vem na URL, e não só do relógio do servidor, para a resposta poder
- * ficar na CDN: a mesma combinação dia + herói dá sempre a mesma linha. Só o
- * dia corrente é aceito — o cliente recarrega o jogo quando a data vira.
+ * ficar na CDN: a mesma combinação modo + dia + herói dá sempre a mesma
+ * resposta. Só o dia corrente é aceito — o cliente recarrega quando a data vira.
+ *
+ * - `mode=classic` (padrão): linha com os atributos comparados.
+ * - `mode=voice`: só acertou ou não, como no modo Quote do Loldle.
  */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const day = params.get("day") ?? "";
   const heroId = Number(params.get("hero"));
+  const mode = params.get("mode") ?? "classic";
 
   if (day !== dleDay()) {
     return NextResponse.json({ error: "stale_day" }, { status: 409, headers: NO_STORE });
   }
+  if (mode !== "classic" && mode !== "voice") {
+    return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });
+  }
 
   try {
+    if (mode === "voice") {
+      const { hero, pool } = await voiceOfDay(day);
+      const guess = pool.find((h) => h.id === heroId);
+      if (!guess) {
+        return NextResponse.json({ error: "bad_request" }, { status: 400, headers: NO_STORE });
+      }
+      const row = {
+        heroId: guess.id,
+        name: guess.name,
+        icon: guess.icon,
+        correct: guess.id === hero.id,
+      };
+      return NextResponse.json({ row }, { headers: cdnCache(3600, 3600) });
+    }
+
     const pool = await getDlePool();
     const guess = pool.find((h) => h.id === heroId);
     if (!guess) {
