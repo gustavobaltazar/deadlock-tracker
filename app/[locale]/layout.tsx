@@ -100,6 +100,12 @@ export default async function LocaleLayout({
               </Link>
               <div className="flex items-center gap-3">
                 <Link
+                  href={`/${locale}/tower`}
+                  className="rounded-md border border-loss/50 bg-loss/10 px-3 py-1.5 text-xs font-bold text-[#ff8a7e] transition-colors hover:bg-loss/20"
+                >
+                  ⚔ {dictionary.tower.nav}
+                </Link>
+                <Link
                   href={`/${locale}/deadlockdle`}
                   className="flex items-center gap-2 rounded-md border border-souls/40 bg-souls/10 px-3 py-1.5 text-xs font-bold text-souls shadow-[0_0_14px_-4px_rgba(255,237,121,0.5)] transition-colors hover:bg-souls/20"
                 >
