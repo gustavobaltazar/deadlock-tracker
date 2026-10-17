@@ -29,7 +29,7 @@ export default function DleTeaser({ silhouettes }: { silhouettes: string[] }) {
   return (
     <Link
       href={`/${locale}/deadlockdle`}
-      className="group relative mt-10 block w-full overflow-hidden rounded-xl border-2 border-accent-dim/50 bg-surface/85 text-left shadow-[0_0_40px_-14px_rgba(255,237,121,0.45)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-[0_0_48px_-10px_rgba(255,237,121,0.6)]"
+      className="group relative block h-full w-full overflow-hidden rounded-xl border-2 border-accent-dim/50 bg-surface/85 text-left shadow-[0_0_40px_-14px_rgba(255,237,121,0.45)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-[0_0_48px_-10px_rgba(255,237,121,0.6)]"
     >
       {/* Brilho dourado vindo da direita, atrás das silhuetas. */}
       <span

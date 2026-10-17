@@ -237,6 +237,13 @@ const en = {
   },
   tower: {
     nav: "Tower",
+    teaser: {
+      badge: "New",
+      desc: "A random hero, 13 floors and one shot at the Patron.",
+      chips: ["Roguelike", "13 floors", "Random hero"],
+      cta: "Climb",
+      resume: "Resume · floor {n}",
+    },
     title: "THE TOWER",
     tagline: "A Deadlock roguelike: a random hero, 13 floors, one shot at the Patron.",
     start: "Start the climb",
@@ -610,6 +617,13 @@ const pt: Dictionary = {
   },
   tower: {
     nav: "Torre",
+    teaser: {
+      badge: "Novo",
+      desc: "Um herói sorteado, 13 andares e uma chance contra o Patrono.",
+      chips: ["Roguelike", "13 andares", "Herói sorteado"],
+      cta: "Escalar",
+      resume: "Continuar · andar {n}",
+    },
     title: "A TORRE",
     tagline: "Um roguelike de Deadlock: um herói sorteado, 13 andares, uma chance contra o Patrono.",
     start: "Começar a escalada",
