@@ -149,7 +149,8 @@ function Player({ day, misses, won }: { day: string; misses: number; won: boolea
   async function toggle() {
     const audio = audioRef.current;
     if (!audio) return;
-    if (playing) {
+    // O estado real vem do elemento: `playing` pode ficar defasado na troca de fala.
+    if (!audio.paused) {
       audio.pause();
       return;
     }
@@ -163,7 +164,10 @@ function Player({ day, misses, won }: { day: string; misses: number; won: boolea
 
   function choose(i: number) {
     if (!unlocked(i)) return;
+    // O <audio> antigo é desmontado antes do evento de pause chegar, então o
+    // onPause nunca roda: o estado precisa ser zerado aqui.
     audioRef.current?.pause();
+    setPlaying(false);
     setClip(i);
     setFailed(false);
   }
