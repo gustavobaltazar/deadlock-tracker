@@ -23,6 +23,7 @@ import {
   isWin,
   parseAccountId,
   pickSignatureHero,
+  summarizeHeroes,
   summarizeMvps,
   toMatchViews,
 } from "@/lib/api";
@@ -115,7 +116,7 @@ export default async function PlayerPage({
   );
   const signature = pickSignatureHero(heroStats);
   const mvps = summarizeMvps(heroStats);
-  const topHeroes = [...heroStats]
+  const topHeroes = summarizeHeroes(matches)
     .sort((a, b) => b.matches_played - a.matches_played)
     .slice(0, 8);
   // Só a janela do mapa viaja para o cliente, reduzida a [início, venceu]. Um

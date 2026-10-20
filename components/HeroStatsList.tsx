@@ -1,4 +1,4 @@
-import type { Hero, PlayerHeroStats } from "@/lib/api";
+import type { Hero, HeroTotals } from "@/lib/api";
 import { percent } from "@/lib/format";
 import { fill, type Dictionary } from "@/lib/i18n";
 
@@ -7,7 +7,7 @@ export default function HeroStatsList({
   heroes,
   t,
 }: {
-  stats: PlayerHeroStats[];
+  stats: HeroTotals[];
   heroes: Map<number, Hero>;
   t: Dictionary;
 }) {

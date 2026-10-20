@@ -611,6 +611,38 @@ export function rankImage(tier: number, subrank: number): string {
  * (ninguém acumula vitórias sem jogar), e o desempate vai para quem tem mais
  * partidas. Exige um mínimo de partidas para um 1x1 sortudo não virar capa.
  */
+export type HeroTotals = Pick<
+  PlayerHeroStats,
+  "hero_id" | "matches_played" | "wins" | "kills" | "deaths" | "assists"
+>;
+
+/**
+ * Totais por herói somados do histórico completo de partidas. Não usamos
+ * /v1/players/hero-stats aqui porque ele perde boa parte das partidas antigas
+ * (numa conta de 2024 contou 239 de 379) e ignora Street Brawl, então a lista
+ * não batia com o resto do perfil.
+ */
+export function summarizeHeroes(matches: MatchHistoryEntry[]): HeroTotals[] {
+  const byHero = new Map<number, HeroTotals>();
+  for (const m of matches) {
+    const s = byHero.get(m.hero_id) ?? {
+      hero_id: m.hero_id,
+      matches_played: 0,
+      wins: 0,
+      kills: 0,
+      deaths: 0,
+      assists: 0,
+    };
+    s.matches_played += 1;
+    if (isWin(m)) s.wins += 1;
+    s.kills += m.player_kills;
+    s.deaths += m.player_deaths;
+    s.assists += m.player_assists;
+    byHero.set(m.hero_id, s);
+  }
+  return [...byHero.values()];
+}
+
 export function pickSignatureHero(
   stats: PlayerHeroStats[],
   minMatches = 5,
